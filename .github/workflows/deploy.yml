@@ -34,5 +34,5 @@ jobs:
             uv run python manage.py migrate
             uv run python manage.py collectstatic --noinput
 
-            sudo systemctl restart qostraProjects
-            sudo systemctl status qostraProjects --no-pager
+            sudo systemctl restart qostraProject
+            sudo systemctl status qostraProject --no-pager
