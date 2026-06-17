@@ -42,4 +42,21 @@ class ProjectSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'code': 'A project with this code already exists in this workspace.'
                 })
+
+        # Validate external client_id against Directory service
+        client_id = attrs.get('client_id')
+        if client_id and workspace_id:
+            from common.utils.directory import validate_directory_client
+            
+            request = self.context.get('request')
+            auth_header = None
+            if request:
+                auth_header = request.META.get('HTTP_AUTHORIZATION')
+                
+            validate_directory_client(
+                workspace_id=workspace_id,
+                client_id=client_id,
+                auth_header=auth_header
+            )
+            
         return attrs

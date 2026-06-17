@@ -149,3 +149,17 @@ AUTH_USER_MODEL = 'accounts.User'
 
 # --- CORS Configuration ---
 CORS_ALLOW_ALL_ORIGINS = True
+
+# --- Service Communication URLs ---
+DIRECTORY_SERVICE_URL = os.getenv('DIRECTORY_SERVICE_URL', 'http://127.0.0.1:8002')
+
+# --- Cache Configuration ---
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'qostra-projects-cache',
+    }
+}
+
+DIRECTORY_CLIENT_CACHE_TTL = int(os.getenv('DIRECTORY_CLIENT_CACHE_TTL', 300))
+

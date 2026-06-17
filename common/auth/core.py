@@ -28,24 +28,18 @@ class BaseUserSyncService(ABC):
         return f"auth_user_sync_{user_id}"
 
     def sync_user(self, user_id, token_payload):
-        # 1. Check Cache first
+        from common.utils.cache import get_or_set_cached
         cache_key = self.get_cache_key(user_id)
-        cached_user = cache.get(cache_key)
-        if cached_user:
-            return cached_user
 
-        # 2. Sync with Database
-        user_instance, created = self.model.objects.get_or_create(
-            id=user_id
-        )
-        
-        # Update local fields from payload
-        if self.update_local_user(user_instance, token_payload) or created:
-            user_instance.save()
-            
-        # 3. Store in Cache
-        cache.set(cache_key, user_instance, timeout=self.cache_timeout)
-        return user_instance
+        def _db_sync():
+            user_instance, created = self.model.objects.get_or_create(
+                id=user_id
+            )
+            if self.update_local_user(user_instance, token_payload) or created:
+                user_instance.save()
+            return user_instance
+
+        return get_or_set_cached(cache_key, _db_sync, timeout=self.cache_timeout)
 
     @abstractmethod
     def update_local_user(self, user_instance, token_payload):
