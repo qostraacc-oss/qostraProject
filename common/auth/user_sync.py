@@ -1,6 +1,5 @@
 import logging
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from common.auth.core import BaseUserSyncService
 
 logger = logging.getLogger(__name__)

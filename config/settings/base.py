@@ -1,14 +1,18 @@
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 # Adjust BASE_DIR for settings directory structure
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+env = environ.Env(
+    DEBUG=(bool, True)
+)
+
 # Load environment variables
-load_dotenv(BASE_DIR / '.env')
+environ.Env.read_env(BASE_DIR / '.env')
 
 # Add apps directory to sys.path
 sys.path.append(str(BASE_DIR / 'apps'))
@@ -18,12 +22,12 @@ sys.path.append(str(BASE_DIR / 'apps'))
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-@0pbmyza)w7)qa_6(!iv_9ekfc+@elff53z*4($s%i4ma0sxr=')
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-@0pbmyza)w7)qa_6(!iv_9ekfc+@elff53z*4($s%i4ma0sxr=')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 
 # --- Application definition ---

@@ -2,7 +2,6 @@ import jwt
 import logging
 from abc import ABC, abstractmethod
 from django.conf import settings
-from django.core.cache import cache
 from rest_framework import authentication, exceptions
 
 logger = logging.getLogger(__name__)
@@ -95,7 +94,7 @@ class GenericJWTAuthentication(authentication.BaseAuthentication):
         # Synchronize User using the project-specific service
         try:
             user = self.sync_service.sync_user(user_id, payload)
-        except Exception as e:
+        except Exception:
             logger.exception("User synchronization failed")
             raise exceptions.AuthenticationFailed('User synchronization error.')
 

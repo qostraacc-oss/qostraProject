@@ -28,3 +28,17 @@ This document outlines the core development rules and best practices for the Qos
   - Add dependency: `uv add <package>`
   - Remove dependency: `uv remove <package>`
   - Run Django commands: `uv run python manage.py <command>`
+
+## 5. Code Quality, Linting & Testing Guidelines
+- **Linting & Formatting (Ruff)**:
+  - All Python code MUST be formatted and linted using `ruff`. Run `uv run ruff format` and `uv run ruff check` before committing.
+- **Type Checking (MyPy)**:
+  - Keep types clean and run type checks with `uv run mypy .` (configured with `django-stubs`).
+- **Testing (PyTest)**:
+  - All test suites MUST use `pytest` and `pytest-django`. Run tests with `uv run pytest`.
+  - Use `factory-boy` and `faker` for generating mock database records in tests. Never hardcode static fixtures for dynamic test data.
+- **Error Tracking & Rate Limiting**:
+  - Production deployments MUST have `sentry-sdk` initialized in production settings.
+  - Apply `django-ratelimit` decorators on public or sensitive API views (e.g., login, registration endpoints) to prevent brute-force attacks.
+- **Debugging (Django Debug Toolbar)**:
+  - Keep `django-debug-toolbar` enabled only in `dev.py` settings and ensure it is never exposed in production.
