@@ -15,6 +15,7 @@ All endpoints are prefixed with the workspace scope:
 * **Method**: `GET`
 * **Headers**: 
   * `Authorization: Bearer <token>`
+* **Access Control**: Returns only the active projects where the authenticated user is an active member or the creator.
 * **Success Response**: `200 OK`
   ```json
   [
@@ -81,16 +82,19 @@ All endpoints are prefixed with the workspace scope:
 ### 3. Retrieve Project
 * **URL**: `/project/<uuid:workspace_id>/<uuid:id>/`
 * **Method**: `GET`
+* **Access Control**: Requester must be the project creator or an active project member.
 * **Success Response**: `200 OK`
 
 ### 4. Update Project (Partial)
 * **URL**: `/project/<uuid:workspace_id>/<uuid:id>/`
 * **Method**: `PATCH`
+* **Access Control**: Only the project creator or an active project member with role `owner` or `admin` can perform updates.
 * **Success Response**: `200 OK`
 
 ### 5. Soft-Delete (Archive) Project
 * **URL**: `/project/<uuid:workspace_id>/<uuid:id>/`
 * **Method**: `DELETE`
+* **Access Control**: Only the project creator or the project `owner` member can archive the project.
 * **Success Response**: `204 No Content`
   * Sets the `archived_at` timestamp.
 
@@ -113,3 +117,60 @@ All endpoints are prefixed with the workspace scope:
 * **Method**: `DELETE`
 * **Success Response**: `204 No Content`
   * Sets the `removed_at` timestamp.
+
+---
+
+## Project Invitations Endpoints
+
+### 1. List/Create Project Invitations
+* **URL**: `/project/<uuid:workspace_id>/<uuid:project_id>/invitations/`
+* **Methods**:
+  * `GET`: Lists all invitations (pending, accepted, declined, revoked) sent for this project. Requester must be a member of the project.
+  * `POST`: Sends a new project membership invitation. Requester must be a project owner or admin.
+* **POST Request Payload**:
+  ```json
+  {
+    "invitee_email": "target.user@qostra.com",
+    "role": "member" // owner, admin, member, viewer
+  }
+  ```
+* **Success Responses**:
+  * `GET`: `200 OK`
+  * `POST`: `201 Created`
+
+### 2. Resend Invitation
+* **URL**: `/project/<uuid:workspace_id>/invitations/<uuid:invitation_id>/resend/`
+* **Method**: `POST`
+* **Permission**: Requester must be a project owner or admin.
+* **Success Response**: `200 OK` (returns the updated invitation object with a renewed `expires_at` timestamp).
+
+### 3. Revoke Invitation
+* **URL**: `/project/<uuid:workspace_id>/invitations/<uuid:invitation_id>/revoke/`
+* **Method**: `POST`
+* **Permission**: Requester must be a project owner or admin.
+* **Success Response**: `200 OK` (updates status to `revoked` and records `revoked_at` timestamp).
+
+### 4. Accept Invitation
+* **URL**: `/project/<uuid:workspace_id>/invitations/<uuid:invitation_id>/accept/`
+* **Method**: `POST`
+* **Permission**: Requester must be the target invitee.
+* **Success Response**: `200 OK` (creates the `ProjectMember` record, updates invitation status to `accepted` and records `accepted_at`).
+
+### 5. Decline Invitation
+* **URL**: `/project/<uuid:workspace_id>/invitations/<uuid:invitation_id>/decline/`
+* **Method**: `POST`
+* **Permission**: Requester must be the target invitee.
+* **Success Response**: `200 OK` (updates invitation status to `declined` and records `declined_at`).
+
+### 6. User-Level Pending Invitations
+* **URL**: `/project/invitations/`
+* **Method**: `GET`
+* **Permission**: Authenticated user.
+* **Success Response**: `200 OK` (returns list of all `pending` invitations sent to the authenticated user).
+
+### 7. Invitation Detail
+* **URL**: `/project/invitations/<uuid:invitation_id>/`
+* **Method**: `GET`
+* **Permission**: Target invitee or project member.
+* **Success Response**: `200 OK` (returns details of the specified invitation, useful for invitation accept screens).
+

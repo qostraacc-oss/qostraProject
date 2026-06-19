@@ -6,12 +6,13 @@ from rest_framework import authentication, exceptions
 
 logger = logging.getLogger(__name__)
 
+
 class BaseUserSyncService(ABC):
     """
-    Abstract Service to handle user synchronization between the Auth service and 
+    Abstract Service to handle user synchronization between the Auth service and
     local project databases. Includes caching to prevent excessive DB hits.
     """
-    
+
     @property
     @abstractmethod
     def model(self):
@@ -28,12 +29,11 @@ class BaseUserSyncService(ABC):
 
     def sync_user(self, user_id, token_payload):
         from common.utils.cache import get_or_set_cached
+
         cache_key = self.get_cache_key(user_id)
 
         def _db_sync():
-            user_instance, created = self.model.objects.get_or_create(
-                id=user_id
-            )
+            user_instance, created = self.model.objects.get_or_create(id=user_id)
             if self.update_local_user(user_instance, token_payload) or created:
                 user_instance.save()
             return user_instance
@@ -48,12 +48,13 @@ class BaseUserSyncService(ABC):
         """
         return False
 
+
 class GenericJWTAuthentication(authentication.BaseAuthentication):
     """
     Generic DRF Authentication class that can be reused across projects.
     Expects a 'sync_service' property to be implemented in subclasses.
     """
-    
+
     @property
     @abstractmethod
     def sync_service(self):
@@ -61,41 +62,41 @@ class GenericJWTAuthentication(authentication.BaseAuthentication):
         pass
 
     def authenticate(self, request):
-        auth_header = request.META.get('HTTP_AUTHORIZATION')
+        auth_header = request.META.get("HTTP_AUTHORIZATION")
         if not auth_header:
             return None
 
         try:
-            prefix, token = auth_header.split(' ')
-            if prefix.lower() != 'bearer':
+            prefix, token = auth_header.split(" ")
+            if prefix.lower() != "bearer":
                 return None
         except ValueError:
-            raise exceptions.AuthenticationFailed('Invalid token header.')
+            raise exceptions.AuthenticationFailed("Invalid token header.")
 
         # Decode Token
         try:
             payload = jwt.decode(
-                token, 
-                settings.SECRET_KEY, 
-                algorithms=[getattr(settings, 'AUTH_ALGORITHM', 'HS256')]
+                token,
+                settings.SECRET_KEY,
+                algorithms=[getattr(settings, "AUTH_ALGORITHM", "HS256")],
             )
         except jwt.ExpiredSignatureError:
-            raise exceptions.AuthenticationFailed('Token has expired.')
+            raise exceptions.AuthenticationFailed("Token has expired.")
         except jwt.InvalidTokenError as e:
             logger.error(f"JWT Verification Failed: {str(e)}")
-            raise exceptions.AuthenticationFailed('Invalid token.')
+            raise exceptions.AuthenticationFailed("Invalid token.")
 
-        user_id_claim = getattr(settings, 'AUTH_USER_ID_CLAIM', 'user_id')
+        user_id_claim = getattr(settings, "AUTH_USER_ID_CLAIM", "user_id")
         user_id = payload.get(user_id_claim)
-        
+
         if not user_id:
-            raise exceptions.AuthenticationFailed('Token missing user identification.')
+            raise exceptions.AuthenticationFailed("Token missing user identification.")
 
         # Synchronize User using the project-specific service
         try:
             user = self.sync_service.sync_user(user_id, payload)
         except Exception:
             logger.exception("User synchronization failed")
-            raise exceptions.AuthenticationFailed('User synchronization error.')
+            raise exceptions.AuthenticationFailed("User synchronization error.")
 
         return (user, token)

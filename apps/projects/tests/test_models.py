@@ -11,7 +11,7 @@ class ProjectModelTestCase(TestCase):
         self.user = User.objects.create_user(
             username="testowner",
             email="testowner@example.com",
-            password="testpassword123"
+            password="testpassword123",
         )
         self.workspace_id = uuid.uuid4()
 
@@ -22,7 +22,7 @@ class ProjectModelTestCase(TestCase):
             created_by=self.user,
             name="Test Project",
             code="TEST_PROJ",
-            description="Testing project creation member hook."
+            description="Testing project creation member hook.",
         )
 
         # Check if project member was automatically created
@@ -38,7 +38,7 @@ class ProjectModelTestCase(TestCase):
             workspace_id=self.workspace_id,
             created_by=self.user,
             name="Test Project 2",
-            code="TEST_PROJ2"
+            code="TEST_PROJ2",
         )
 
         # Count active members

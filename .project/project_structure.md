@@ -16,10 +16,10 @@ This document provides a detailed overview of the QostraProjects project directo
 Logic is partitioned into projects, milestones, tasks, and timelogs.
 
 ### Projects (`/projects/`)
-Core workspace project management (status, owners, metadata).
-- `models.py`: Defines the `Project` model and associated status fields.
-- `views/`: Package managing project views.
-- `serializers/`: Handles project data validation.
+Core workspace project management (status, owners, metadata, and invitations).
+- `models/`: Package defining database models including `Project`, `ProjectMember`, and `ProjectInvitation`.
+- `views/`: Package managing project, member, and invitation views.
+- `serializers/`: Package handling project, member, and invitation data validation/serialization.
 - `services/`: Encapsulates project management business services.
 
 ### Milestones (`/milestones/`)

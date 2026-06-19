@@ -1,3 +1,4 @@
 from .project import Project, ProjectMember
+from .invitation import ProjectInvitation
 
-__all__ = ["Project", "ProjectMember"]
+__all__ = ["Project", "ProjectMember", "ProjectInvitation"]

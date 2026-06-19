@@ -4,10 +4,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from apps.accounts.serializers import UserSerializer
 
+
 class ProfileAPIView(APIView):
     """
     Get or update the authenticated user's profile.
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):

@@ -37,3 +37,8 @@ dev = [
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 
+[tool.ruff]
+exclude = [
+    "**/migrations/*",
+]
+

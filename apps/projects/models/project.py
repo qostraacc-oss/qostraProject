@@ -170,7 +170,7 @@ class Project(models.Model):
                     "role": ProjectMember.RoleChoices.OWNER,
                     "workspace_id": self.workspace_id,
                     "created_by": self.created_by,
-                }
+                },
             )
 
     @property
