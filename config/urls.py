@@ -17,20 +17,9 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from projects.views import UserPendingInvitationsAPIView, InvitationDetailAPIView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("apps.accounts.urls")),
-    path(
-        "project/invitations/",
-        UserPendingInvitationsAPIView.as_view(),
-        name="user-invitations-list",
-    ),
-    path(
-        "project/invitations/<uuid:invitation_id>/",
-        InvitationDetailAPIView.as_view(),
-        name="user-invitation-detail",
-    ),
-    path("project/<uuid:workspace_id>/", include("apps.projects.urls")),
+    path("project/", include("apps.projects.urls")),
 ]

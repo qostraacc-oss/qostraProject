@@ -1,0 +1,1 @@
+from tasks.views.board_views import BoardListCreateAPIView, BoardDetailAPIView

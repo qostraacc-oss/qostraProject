@@ -17,6 +17,7 @@ class ProjectsUserSyncService(BaseUserSyncService):
         return User
 
     def sync_user(self, user_id, token_payload):
+        from django.core.cache import cache
         from common.utils.cache import get_or_set_cached
 
         cache_key = self.get_cache_key(user_id)
@@ -32,7 +33,11 @@ class ProjectsUserSyncService(BaseUserSyncService):
                 user_instance.save()
             return user_instance
 
-        return get_or_set_cached(cache_key, _db_sync, timeout=self.cache_timeout)
+        user = get_or_set_cached(cache_key, _db_sync, timeout=self.cache_timeout)
+        if not self.model.objects.filter(id=user.id).exists():
+            cache.delete(cache_key)
+            user = _db_sync()
+        return user
 
     def update_local_user(self, user_instance, token_payload):
         """

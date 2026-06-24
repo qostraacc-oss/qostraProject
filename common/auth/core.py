@@ -28,6 +28,7 @@ class BaseUserSyncService(ABC):
         return f"auth_user_sync_{user_id}"
 
     def sync_user(self, user_id, token_payload):
+        from django.core.cache import cache
         from common.utils.cache import get_or_set_cached
 
         cache_key = self.get_cache_key(user_id)
@@ -38,7 +39,11 @@ class BaseUserSyncService(ABC):
                 user_instance.save()
             return user_instance
 
-        return get_or_set_cached(cache_key, _db_sync, timeout=self.cache_timeout)
+        user = get_or_set_cached(cache_key, _db_sync, timeout=self.cache_timeout)
+        if not self.model.objects.filter(id=user.id).exists():
+            cache.delete(cache_key)
+            user = _db_sync()
+        return user
 
     @abstractmethod
     def update_local_user(self, user_instance, token_payload):
