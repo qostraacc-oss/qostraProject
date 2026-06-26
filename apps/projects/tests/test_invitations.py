@@ -118,7 +118,7 @@ class ProjectInvitationAPITestCase(TestCase):
 
         url = reverse(
             "project-invitation-accept",
-            kwargs={"workspace_id": self.workspace_id, "invitation_id": invite.id},
+            kwargs={"invitation_id": invite.id},
         )
 
         response = self.client.post(url, format="json")
@@ -151,7 +151,7 @@ class ProjectInvitationAPITestCase(TestCase):
 
         url = reverse(
             "project-invitation-accept",
-            kwargs={"workspace_id": self.workspace_id, "invitation_id": invite.id},
+            kwargs={"invitation_id": invite.id},
         )
         response = self.client.post(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -198,3 +198,91 @@ class ProjectInvitationAPITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["id"], str(invite.id))
+
+    def test_user_level_invitation_detail_success(self):
+        invite = ProjectInvitation.objects.create(
+            workspace_id=self.workspace_id,
+            project=self.project,
+            invitee_id=self.target_user.id,
+            invitee_email=self.target_user.email,
+            role=ProjectMember.RoleChoices.MEMBER,
+            status=ProjectInvitation.StatusChoices.PENDING,
+            invited_by=self.owner,
+            expires_at=timezone.now() + timedelta(days=7),
+        )
+        self.client.force_authenticate(user=self.target_user)
+        url = reverse("user-invitation-detail", kwargs={"invitation_id": invite.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], str(invite.id))
+
+    def test_user_level_invitation_detail_forbidden_for_other_user(self):
+        invite = ProjectInvitation.objects.create(
+            workspace_id=self.workspace_id,
+            project=self.project,
+            invitee_id=self.target_user.id,
+            invitee_email=self.target_user.email,
+            role=ProjectMember.RoleChoices.MEMBER,
+            status=ProjectInvitation.StatusChoices.PENDING,
+            invited_by=self.owner,
+            expires_at=timezone.now() + timedelta(days=7),
+        )
+        other_user = User.objects.create_user(
+            username="otheruser", email="otheruser@example.com", password="testpassword"
+        )
+        self.client.force_authenticate(user=other_user)
+        url = reverse("user-invitation-detail", kwargs={"invitation_id": invite.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_workspace_level_invitation_detail_success_for_owner_admin(self):
+        invite = ProjectInvitation.objects.create(
+            workspace_id=self.workspace_id,
+            project=self.project,
+            invitee_id=self.target_user.id,
+            invitee_email=self.target_user.email,
+            role=ProjectMember.RoleChoices.MEMBER,
+            status=ProjectInvitation.StatusChoices.PENDING,
+            invited_by=self.owner,
+            expires_at=timezone.now() + timedelta(days=7),
+        )
+        self.client.force_authenticate(user=self.owner)
+        url = reverse(
+            "workspace-invitation-detail",
+            kwargs={"workspace_id": self.workspace_id, "invitation_id": invite.id},
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], str(invite.id))
+
+    def test_workspace_level_invitation_detail_forbidden_for_member(self):
+        invite = ProjectInvitation.objects.create(
+            workspace_id=self.workspace_id,
+            project=self.project,
+            invitee_id=self.target_user.id,
+            invitee_email=self.target_user.email,
+            role=ProjectMember.RoleChoices.MEMBER,
+            status=ProjectInvitation.StatusChoices.PENDING,
+            invited_by=self.owner,
+            expires_at=timezone.now() + timedelta(days=7),
+        )
+        # Authenticate as member of project (not owner/admin)
+        member_user = User.objects.create_user(
+            username="regularmember",
+            email="member@example.com",
+            password="testpassword123",
+        )
+        ProjectMember.objects.create(
+            project=self.project,
+            user=member_user,
+            role=ProjectMember.RoleChoices.MEMBER,
+            workspace_id=self.workspace_id,
+            created_by=self.owner,
+        )
+        self.client.force_authenticate(user=member_user)
+        url = reverse(
+            "workspace-invitation-detail",
+            kwargs={"workspace_id": self.workspace_id, "invitation_id": invite.id},
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

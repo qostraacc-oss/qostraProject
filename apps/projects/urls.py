@@ -11,6 +11,7 @@ from projects.views import (
     DeclineInvitationAPIView,
     UserPendingInvitationsAPIView,
     InvitationDetailAPIView,
+    WorkspaceInvitationDetailAPIView,
 )
 
 urlpatterns = [
@@ -65,12 +66,17 @@ urlpatterns = [
         name="project-invitation-revoke",
     ),
     path(
-        "<uuid:workspace_id>/invitations/<uuid:invitation_id>/accept/",
+        "<uuid:workspace_id>/invitations/<uuid:invitation_id>/",
+        WorkspaceInvitationDetailAPIView.as_view(),
+        name="workspace-invitation-detail",
+    ),
+    path(
+        "invitations/<uuid:invitation_id>/accept/",
         AcceptInvitationAPIView.as_view(),
         name="project-invitation-accept",
     ),
     path(
-        "<uuid:workspace_id>/invitations/<uuid:invitation_id>/decline/",
+        "invitations/<uuid:invitation_id>/decline/",
         DeclineInvitationAPIView.as_view(),
         name="project-invitation-decline",
     ),

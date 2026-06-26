@@ -151,13 +151,13 @@ All endpoints are prefixed with the workspace scope:
 * **Success Response**: `200 OK` (updates status to `revoked` and records `revoked_at` timestamp).
 
 ### 4. Accept Invitation
-* **URL**: `/project/<uuid:workspace_id>/invitations/<uuid:invitation_id>/accept/`
+* **URL**: `/project/invitations/<uuid:invitation_id>/accept/`
 * **Method**: `POST`
 * **Permission**: Requester must be the target invitee.
 * **Success Response**: `200 OK` (creates the `ProjectMember` record, updates invitation status to `accepted` and records `accepted_at`).
 
 ### 5. Decline Invitation
-* **URL**: `/project/<uuid:workspace_id>/invitations/<uuid:invitation_id>/decline/`
+* **URL**: `/project/invitations/<uuid:invitation_id>/decline/`
 * **Method**: `POST`
 * **Permission**: Requester must be the target invitee.
 * **Success Response**: `200 OK` (updates invitation status to `declined` and records `declined_at`).
@@ -168,9 +168,15 @@ All endpoints are prefixed with the workspace scope:
 * **Permission**: Authenticated user.
 * **Success Response**: `200 OK` (returns list of all `pending` invitations sent to the authenticated user).
 
-### 7. Invitation Detail
+### 7. User-Level Invitation Detail
 * **URL**: `/project/invitations/<uuid:invitation_id>/`
 * **Method**: `GET`
-* **Permission**: Target invitee or project member.
+* **Permission**: Target invitee only.
 * **Success Response**: `200 OK` (returns details of the specified invitation, useful for invitation accept screens).
+
+### 8. Workspace-Level Invitation Detail
+* **URL**: `/project/<uuid:workspace_id>/invitations/<uuid:invitation_id>/`
+* **Method**: `GET`
+* **Permission**: Project Owner or Admin within the workspace.
+* **Success Response**: `200 OK` (returns details of the specified invitation).
 

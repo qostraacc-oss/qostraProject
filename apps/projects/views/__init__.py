@@ -12,6 +12,7 @@ from projects.views.invitation_views import (
     RevokeInvitationAPIView,
     UserPendingInvitationsAPIView,
     InvitationDetailAPIView,
+    WorkspaceInvitationDetailAPIView,
     AcceptInvitationAPIView,
     DeclineInvitationAPIView,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "RevokeInvitationAPIView",
     "UserPendingInvitationsAPIView",
     "InvitationDetailAPIView",
+    "WorkspaceInvitationDetailAPIView",
     "AcceptInvitationAPIView",
     "DeclineInvitationAPIView",
 ]
