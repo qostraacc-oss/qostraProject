@@ -7,7 +7,26 @@ from django.db.models import Q
 from django.utils.text import slugify
 
 
+class ProjectQuerySet(models.QuerySet):
+    def for_workspace(self, workspace_id, user):
+        """
+        Returns projects associated with the workspace:
+        1. Owned/created by user in this workspace.
+        2. Or mapped by user to this workspace as an active project member.
+        """
+        return self.filter(
+            models.Q(workspace_id=workspace_id, created_by=user) |
+            models.Q(
+                members__user=user,
+                members__workspace_id=workspace_id,
+                members__removed_at__isnull=True
+            )
+        ).distinct()
+
+
 class Project(models.Model):
+    objects = ProjectQuerySet.as_manager()
+
     class StatusChoices(models.TextChoices):
         PLANNED = "planned", "Planned"
         IN_PROGRESS = "in_progress", "In Progress"

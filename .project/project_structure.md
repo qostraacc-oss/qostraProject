@@ -1,7 +1,7 @@
 # Project Structure
 
 ## Project Overview
-**QostraProjects** handles the task tracking, roadmaps, and timelogs for the Qostra ERP platform. It manages task allocations, Kanban boards, project milestone roadmaps, and positive-duration time logging, resolving dependencies and mapping user task permissions securely.
+**QostraProjects** handles the task tracking, roadmaps, and timelogs for the Qostra ERP platform. It manages task allocations, Kanban boards, project milestone roadmaps, and positive-duration time logging. It securely handles cross-workspace user invitations, allowing external members to map invited projects to their own workspaces for clean separation of personal, freelance, and company contexts.
 
 This document provides a detailed overview of the QostraProjects project directory structure and the purpose of each component.
 

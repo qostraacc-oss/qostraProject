@@ -14,6 +14,8 @@ This document outlines the core development rules and best practices for the Qos
 - **State Machine Integrity**: Ensure that status changes for projects and tasks follow valid state flows. Do not allow completed/archived tasks to be modified without proper verification.
 - **Assigned User Scoping**: Users should only be allowed to modify task status or log time if they are assigned to the task/project, or hold manager/admin roles.
 - **Logged Time Validation**: All logged time durations MUST be positive. Timelogs MUST be associated with a valid task and user, and should be locked/closed once a billing period ends.
+- **Cross-Workspace Project Mapping**: When querying projects or project sub-resources (like boards, tasks, milestones) within a workspace context, you MUST use `Project.objects.for_workspace(workspace_id, user)` instead of filtering by `project__workspace_id` directly, to support external projects mapped to the member's workspace.
+
 
 ## 3. Code Quality and Maintenance
 - **Consistency**: Maintain uniformity with serializers and views.

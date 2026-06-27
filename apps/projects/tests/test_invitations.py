@@ -121,7 +121,7 @@ class ProjectInvitationAPITestCase(TestCase):
             kwargs={"invitation_id": invite.id},
         )
 
-        response = self.client.post(url, format="json")
+        response = self.client.post(url, data={"workspace_id": str(self.workspace_id)}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             response.data["status"], ProjectInvitation.StatusChoices.ACCEPTED
@@ -153,7 +153,7 @@ class ProjectInvitationAPITestCase(TestCase):
             "project-invitation-accept",
             kwargs={"invitation_id": invite.id},
         )
-        response = self.client.post(url, format="json")
+        response = self.client.post(url, data={"workspace_id": str(self.workspace_id)}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_revoke_invitation_success(self):

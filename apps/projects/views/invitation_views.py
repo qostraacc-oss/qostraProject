@@ -272,21 +272,34 @@ class AcceptInvitationAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        selected_workspace_id = request.data.get("workspace_id")
+        if not selected_workspace_id:
+            return Response(
+                {"workspace_id": "This field is required on acceptance."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # 3. Accept invitation
         invitation.status = ProjectInvitation.StatusChoices.ACCEPTED
         invitation.accepted_at = timezone.now()
         invitation.save()
 
-        # 4. Create Project Member
-        ProjectMember.objects.get_or_create(
+        # 4. Create or Reactivate Project Member
+        member, created = ProjectMember.objects.get_or_create(
             project=invitation.project,
             user=request.user,
             defaults={
-                "workspace_id": invitation.workspace_id,
+                "workspace_id": selected_workspace_id,
                 "role": invitation.role,
                 "created_by": invitation.invited_by,
             },
         )
+        if not created:
+            member.removed_at = None
+            member.workspace_id = selected_workspace_id
+            member.role = invitation.role
+            member.created_by = invitation.invited_by
+            member.save()
 
         return Response(ProjectInvitationSerializer(invitation).data)
 

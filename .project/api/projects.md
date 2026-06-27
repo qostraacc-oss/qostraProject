@@ -154,7 +154,13 @@ All endpoints are prefixed with the workspace scope:
 * **URL**: `/project/invitations/<uuid:invitation_id>/accept/`
 * **Method**: `POST`
 * **Permission**: Requester must be the target invitee.
-* **Success Response**: `200 OK` (creates the `ProjectMember` record, updates invitation status to `accepted` and records `accepted_at`).
+* **Request Payload**:
+  ```json
+  {
+    "workspace_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22" // Mapped Workspace ID for the member
+  }
+  ```
+* **Success Response**: `200 OK` (creates the `ProjectMember` record mapped to the selected workspace, updates invitation status to `accepted` and records `accepted_at`).
 
 ### 5. Decline Invitation
 * **URL**: `/project/invitations/<uuid:invitation_id>/decline/`

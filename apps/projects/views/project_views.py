@@ -15,14 +15,10 @@ class ProjectListCreateAPIView(APIView):
     """
 
     def get(self, request, workspace_id):
-        # Filter projects by workspace and where user is creator or active member
+        # Filter projects by workspace mapping
         projects = (
-            Project.objects.filter(workspace_id=workspace_id, archived_at__isnull=True)
-            .filter(
-                Q(created_by=request.user)
-                | Q(members__user=request.user, members__removed_at__isnull=True)
-            )
-            .distinct()
+            Project.objects.for_workspace(workspace_id, request.user)
+            .filter(archived_at__isnull=True)
         )
 
         serializer = ProjectSerializer(projects, many=True)
@@ -49,16 +45,20 @@ class ProjectDetailAPIView(APIView):
     """
 
     def get_object(self, workspace_id, pk, user):
+        from django.http import Http404
+
         project = get_object_or_404(
-            Project, workspace_id=workspace_id, pk=pk, archived_at__isnull=True
+            Project, pk=pk, archived_at__isnull=True
         )
 
-        # Verify user has access (creator or active member)
-        is_member = ProjectMember.objects.filter(
-            project=project, user=user, removed_at__isnull=True
-        ).exists()
+        is_creator = (project.created_by == user and project.workspace_id == workspace_id)
+        member = ProjectMember.objects.filter(
+            project=project, user=user, workspace_id=workspace_id, removed_at__isnull=True
+        ).first()
 
-        if project.created_by != user and not is_member:
+        if not is_creator and not member:
+            if project.workspace_id != workspace_id:
+                raise Http404("No Project matches the given query.")
             raise PermissionDenied("You do not have permission to access this project.")
 
         return project

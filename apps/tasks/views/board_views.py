@@ -14,15 +14,20 @@ class BoardListCreateAPIView(APIView):
     """
 
     def get_project_member(self, workspace_id, project_id, user):
+        from django.http import Http404
+
         project = get_object_or_404(
-            Project, workspace_id=workspace_id, pk=project_id, archived_at__isnull=True
+            Project, pk=project_id, archived_at__isnull=True
         )
 
+        is_creator = (project.created_by == user and project.workspace_id == workspace_id)
         member = ProjectMember.objects.filter(
-            project=project, user=user, removed_at__isnull=True
+            project=project, user=user, workspace_id=workspace_id, removed_at__isnull=True
         ).first()
 
-        if project.created_by != user and not member:
+        if not is_creator and not member:
+            if project.workspace_id != workspace_id:
+                raise Http404("No Project matches the given query.")
             raise PermissionDenied("You do not have permission to access this project.")
 
         return project, member
@@ -66,18 +71,23 @@ class BoardDetailAPIView(APIView):
     """
 
     def get_board_and_member(self, workspace_id, board_id, user):
+        from django.http import Http404
+
         board = get_object_or_404(
             Board,
-            project__workspace_id=workspace_id,
             pk=board_id,
             project__archived_at__isnull=True,
         )
 
+        project = board.project
+        is_creator = (project.created_by == user and project.workspace_id == workspace_id)
         member = ProjectMember.objects.filter(
-            project=board.project, user=user, removed_at__isnull=True
+            project=project, user=user, workspace_id=workspace_id, removed_at__isnull=True
         ).first()
 
-        if board.project.created_by != user and not member:
+        if not is_creator and not member:
+            if project.workspace_id != workspace_id:
+                raise Http404("No Board matches the given query.")
             raise PermissionDenied("You do not have permission to access this project.")
 
         return board, member
