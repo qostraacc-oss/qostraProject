@@ -17,7 +17,7 @@ class ProjectMemberListAPIView(APIView):
         project = get_object_or_404(
             Project.objects.for_workspace(workspace_id, request.user),
             pk=project_id,
-            archived_at__isnull=True
+            archived_at__isnull=True,
         )
         members = ProjectMember.objects.filter(project=project, removed_at__isnull=True)
         serializer = ProjectMemberSerializer(members, many=True)
@@ -33,7 +33,7 @@ class ProjectMemberDetailAPIView(APIView):
         project = get_object_or_404(
             Project.objects.for_workspace(workspace_id, user),
             pk=project_id,
-            archived_at__isnull=True
+            archived_at__isnull=True,
         )
         return get_object_or_404(
             ProjectMember,

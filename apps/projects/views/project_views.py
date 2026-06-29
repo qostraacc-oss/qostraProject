@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.db.models import Q
 from projects.models import Project, ProjectMember
 from projects.serializers import ProjectSerializer
 
@@ -16,9 +15,8 @@ class ProjectListCreateAPIView(APIView):
 
     def get(self, request, workspace_id):
         # Filter projects by workspace mapping
-        projects = (
-            Project.objects.for_workspace(workspace_id, request.user)
-            .filter(archived_at__isnull=True)
+        projects = Project.objects.for_workspace(workspace_id, request.user).filter(
+            archived_at__isnull=True
         )
 
         serializer = ProjectSerializer(projects, many=True)
@@ -47,13 +45,14 @@ class ProjectDetailAPIView(APIView):
     def get_object(self, workspace_id, pk, user):
         from django.http import Http404
 
-        project = get_object_or_404(
-            Project, pk=pk, archived_at__isnull=True
-        )
+        project = get_object_or_404(Project, pk=pk, archived_at__isnull=True)
 
-        is_creator = (project.created_by == user and project.workspace_id == workspace_id)
+        is_creator = project.created_by == user and project.workspace_id == workspace_id
         member = ProjectMember.objects.filter(
-            project=project, user=user, workspace_id=workspace_id, removed_at__isnull=True
+            project=project,
+            user=user,
+            workspace_id=workspace_id,
+            removed_at__isnull=True,
         ).first()
 
         if not is_creator and not member:

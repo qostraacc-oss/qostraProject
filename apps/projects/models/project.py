@@ -15,11 +15,11 @@ class ProjectQuerySet(models.QuerySet):
         2. Or mapped by user to this workspace as an active project member.
         """
         return self.filter(
-            models.Q(workspace_id=workspace_id, created_by=user) |
-            models.Q(
+            models.Q(workspace_id=workspace_id, created_by=user)
+            | models.Q(
                 members__user=user,
                 members__workspace_id=workspace_id,
-                members__removed_at__isnull=True
+                members__removed_at__isnull=True,
             )
         ).distinct()
 

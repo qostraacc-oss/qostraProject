@@ -31,9 +31,9 @@ Chronological roadmaps and phases for projects.
 
 ### Tasks (`/tasks/`)
 Task items, assignment, Kanban boards, and task dependencies.
-- `models.py`: Defines `Task` and `TaskDependency` relations.
-- `views/`: Package managing task views.
-- `serializers/`: Handles task data validation.
+- `models/`: Package defining board, column, and task models.
+- `views/`: Package managing board, column, and task views.
+- `serializers/`: Package handling board, column, and task serializers.
 - `services/`: Encapsulates task workflow business services.
 
 ### Timelogs (`/timelogs/`)

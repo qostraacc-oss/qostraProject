@@ -16,13 +16,14 @@ class BoardListCreateAPIView(APIView):
     def get_project_member(self, workspace_id, project_id, user):
         from django.http import Http404
 
-        project = get_object_or_404(
-            Project, pk=project_id, archived_at__isnull=True
-        )
+        project = get_object_or_404(Project, pk=project_id, archived_at__isnull=True)
 
-        is_creator = (project.created_by == user and project.workspace_id == workspace_id)
+        is_creator = project.created_by == user and project.workspace_id == workspace_id
         member = ProjectMember.objects.filter(
-            project=project, user=user, workspace_id=workspace_id, removed_at__isnull=True
+            project=project,
+            user=user,
+            workspace_id=workspace_id,
+            removed_at__isnull=True,
         ).first()
 
         if not is_creator and not member:
@@ -80,9 +81,12 @@ class BoardDetailAPIView(APIView):
         )
 
         project = board.project
-        is_creator = (project.created_by == user and project.workspace_id == workspace_id)
+        is_creator = project.created_by == user and project.workspace_id == workspace_id
         member = ProjectMember.objects.filter(
-            project=project, user=user, workspace_id=workspace_id, removed_at__isnull=True
+            project=project,
+            user=user,
+            workspace_id=workspace_id,
+            removed_at__isnull=True,
         ).first()
 
         if not is_creator and not member:

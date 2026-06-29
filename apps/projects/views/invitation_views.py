@@ -233,7 +233,9 @@ class WorkspaceInvitationDetailAPIView(APIView):
         ).exists()
         if not is_authorized:
             return Response(
-                {"detail": "Only project owners or admins can view workspace invitation details."},
+                {
+                    "detail": "Only project owners or admins can view workspace invitation details."
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -248,9 +250,7 @@ class AcceptInvitationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, invitation_id):
-        invitation = get_object_or_404(
-            ProjectInvitation, pk=invitation_id
-        )
+        invitation = get_object_or_404(ProjectInvitation, pk=invitation_id)
 
         # 1. Enforce that only the target user can accept it
         if invitation.invitee_id != request.user.id:
@@ -312,9 +312,7 @@ class DeclineInvitationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, invitation_id):
-        invitation = get_object_or_404(
-            ProjectInvitation, pk=invitation_id
-        )
+        invitation = get_object_or_404(ProjectInvitation, pk=invitation_id)
 
         if invitation.invitee_id != request.user.id:
             return Response(

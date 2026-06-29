@@ -1,1 +1,2 @@
-from tasks.serializers.board_serializer import BoardSerializer
+from tasks.serializers.board_serializer import BoardSerializer as BoardSerializer
+from tasks.serializers.column_serializer import ColumnSerializer as ColumnSerializer

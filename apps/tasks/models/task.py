@@ -35,6 +35,12 @@ class Board(models.Model):
 
 
 class Column(models.Model):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
     class Category(models.TextChoices):
         OPEN = "OPEN", _("Open")
         DONE = "DONE", _("Done")
