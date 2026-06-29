@@ -150,6 +150,8 @@ AUTH_USER_MODEL = "accounts.User"
 
 # --- CORS Configuration ---
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
 
 # --- Service Communication URLs ---
 DIRECTORY_SERVICE_URL = os.getenv("DIRECTORY_SERVICE_URL", "http://127.0.0.1:8002")
