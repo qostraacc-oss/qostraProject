@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from projects.models import Project, ProjectInvitation, ProjectMember
 from projects.serializers import ProjectInvitationSerializer
+from common.permissions import HasWorkspaceProjectAccess
 
 
 class ProjectInvitationListCreateAPIView(APIView):
@@ -16,56 +17,20 @@ class ProjectInvitationListCreateAPIView(APIView):
     Only project Owners/Admins can invite.
     Project members can list invitations.
     """
+    permission_classes = [HasWorkspaceProjectAccess]
 
-    permission_classes = [IsAuthenticated]
-
-    def get_project_and_check_membership(self, request, workspace_id, project_id):
-        project = get_object_or_404(
-            Project, workspace_id=workspace_id, pk=project_id, archived_at__isnull=True
-        )
-        # Check if requesting user is a member of the project
-        is_member = ProjectMember.objects.filter(
-            project=project, user=request.user, removed_at__isnull=True
-        ).exists()
-        if not is_member:
-            return None, Response(
-                {
-                    "detail": "You do not have permission to access this project's invitations."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return project, None
+    # Members can view/list invitations, but only owners/admins can create them
+    read_roles = ["owner", "admin", "member", "viewer"]
+    write_roles = ["owner", "admin"]
 
     def get(self, request, workspace_id, project_id):
-        project, error_response = self.get_project_and_check_membership(
-            request, workspace_id, project_id
-        )
-        if error_response:
-            return error_response
-
+        project = request._workspace_project_member_cache["project"]
         invitations = ProjectInvitation.objects.filter(project=project)
         serializer = ProjectInvitationSerializer(invitations, many=True)
         return Response(serializer.data)
 
     def post(self, request, workspace_id, project_id):
-        project, error_response = self.get_project_and_check_membership(
-            request, workspace_id, project_id
-        )
-        if error_response:
-            return error_response
-
-        # Verify role: requester must be owner or admin to invite
-        is_admin_or_owner = ProjectMember.objects.filter(
-            project=project,
-            user=request.user,
-            role__in=[ProjectMember.RoleChoices.OWNER, ProjectMember.RoleChoices.ADMIN],
-            removed_at__isnull=True,
-        ).exists()
-        if not is_admin_or_owner:
-            return Response(
-                {"detail": "Only project owners or admins can invite new members."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        project = request._workspace_project_member_cache["project"]
 
         serializer = ProjectInvitationSerializer(
             data=request.data,
@@ -79,9 +44,6 @@ class ProjectInvitationListCreateAPIView(APIView):
             invitation = serializer.save(
                 project=project, workspace_id=workspace_id, invited_by=request.user
             )
-            # Future expansion: publish event / trigger async email here
-            # publish_event("project.invitation.created", {"id": str(invitation.id)})
-
             return Response(
                 ProjectInvitationSerializer(invitation).data,
                 status=status.HTTP_201_CREATED,
@@ -93,26 +55,16 @@ class ResendInvitationAPIView(APIView):
     """
     Resends a pending project invitation (renews expires_at).
     """
-
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasWorkspaceProjectAccess]
+    
+    # Custom config: Only owners and admins can write/resend
+    write_roles = ["owner", "admin"]
 
     def post(self, request, workspace_id, invitation_id):
         invitation = get_object_or_404(
             ProjectInvitation, workspace_id=workspace_id, pk=invitation_id
         )
-
-        # Verify requesting user is owner/admin of the project
-        is_authorized = ProjectMember.objects.filter(
-            project=invitation.project,
-            user=request.user,
-            role__in=[ProjectMember.RoleChoices.OWNER, ProjectMember.RoleChoices.ADMIN],
-            removed_at__isnull=True,
-        ).exists()
-        if not is_authorized:
-            return Response(
-                {"detail": "Only project owners or admins can resend invitations."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        self.check_object_permissions(request, invitation)
 
         if invitation.status not in [
             ProjectInvitation.StatusChoices.PENDING,
@@ -136,25 +88,16 @@ class RevokeInvitationAPIView(APIView):
     """
     Revokes/cancels a pending invitation.
     """
-
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasWorkspaceProjectAccess]
+    
+    # Custom config: Only owners and admins can revoke
+    write_roles = ["owner", "admin"]
 
     def post(self, request, workspace_id, invitation_id):
         invitation = get_object_or_404(
             ProjectInvitation, workspace_id=workspace_id, pk=invitation_id
         )
-
-        is_authorized = ProjectMember.objects.filter(
-            project=invitation.project,
-            user=request.user,
-            role__in=[ProjectMember.RoleChoices.OWNER, ProjectMember.RoleChoices.ADMIN],
-            removed_at__isnull=True,
-        ).exists()
-        if not is_authorized:
-            return Response(
-                {"detail": "Only project owners or admins can revoke invitations."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        self.check_object_permissions(request, invitation)
 
         if invitation.status != ProjectInvitation.StatusChoices.PENDING:
             return Response(
@@ -173,7 +116,6 @@ class UserPendingInvitationsAPIView(APIView):
     """
     Lists pending invitations for the logged-in user.
     """
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -196,7 +138,6 @@ class InvitationDetailAPIView(APIView):
     """
     View details of an invitation by the invitee. Required for acceptance screens.
     """
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request, invitation_id):
@@ -216,28 +157,16 @@ class WorkspaceInvitationDetailAPIView(APIView):
     """
     View details of an invitation by project Owners/Admins within a workspace.
     """
-
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasWorkspaceProjectAccess]
+    
+    # Custom config: Only owners and admins can view workspace invitations
+    read_roles = ["owner", "admin"]
 
     def get(self, request, workspace_id, invitation_id):
         invitation = get_object_or_404(
             ProjectInvitation, workspace_id=workspace_id, pk=invitation_id
         )
-
-        # Verify requesting user is owner/admin of the project
-        is_authorized = ProjectMember.objects.filter(
-            project=invitation.project,
-            user=request.user,
-            role__in=[ProjectMember.RoleChoices.OWNER, ProjectMember.RoleChoices.ADMIN],
-            removed_at__isnull=True,
-        ).exists()
-        if not is_authorized:
-            return Response(
-                {
-                    "detail": "Only project owners or admins can view workspace invitation details."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        self.check_object_permissions(request, invitation)
 
         return Response(ProjectInvitationSerializer(invitation).data)
 
@@ -246,7 +175,6 @@ class AcceptInvitationAPIView(APIView):
     """
     Accept a pending invitation.
     """
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request, invitation_id):
@@ -308,7 +236,6 @@ class DeclineInvitationAPIView(APIView):
     """
     Decline a pending invitation.
     """
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request, invitation_id):

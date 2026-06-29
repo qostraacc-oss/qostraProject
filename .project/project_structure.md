@@ -45,7 +45,10 @@ Timesheet logging and duration tracking.
 
 ## 2. Common Components (`/common/`)
 - `utils/`: Date range parsers, weekly timesheet aggregation helpers.
-- `permissions/`: Project-specific permissions (e.g., verifying user assigned to project).
+- `permissions/`: Project-specific permissions.
+  - `mixins.py`: Defines the `WorkspaceResourceMixin` for resolving parent projects.
+  - `workspace_permissions.py`: Defines the generic `HasWorkspaceProjectAccess` permission class.
+
 
 ## 3. Configuration (`/config/`)
 - `settings/`: Multi-environment settings structure (`base.py`, `dev.py`, `prod.py`, `test.py`).

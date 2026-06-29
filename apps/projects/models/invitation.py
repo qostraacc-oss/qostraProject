@@ -6,11 +6,18 @@ from django.utils import timezone
 from .project import Project, ProjectMember
 
 
+from common.permissions import WorkspaceResourceMixin
+
+
 def default_expires_at():
     return timezone.now() + timedelta(days=7)
 
 
-class ProjectInvitation(models.Model):
+class ProjectInvitation(WorkspaceResourceMixin, models.Model):
+    @property
+    def project_context(self):
+        return self.project
+
     class StatusChoices(models.TextChoices):
         PENDING = "pending", "Pending"
         ACCEPTED = "accepted", "Accepted"

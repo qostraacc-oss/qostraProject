@@ -7,6 +7,9 @@ from django.db.models import Q
 from django.utils.text import slugify
 
 
+from common.permissions import WorkspaceResourceMixin
+
+
 class ProjectQuerySet(models.QuerySet):
     def for_workspace(self, workspace_id, user):
         """
@@ -24,8 +27,13 @@ class ProjectQuerySet(models.QuerySet):
         ).distinct()
 
 
-class Project(models.Model):
+class Project(WorkspaceResourceMixin, models.Model):
     objects = ProjectQuerySet.as_manager()
+
+    @property
+    def project_context(self):
+        return self
+
 
     class StatusChoices(models.TextChoices):
         PLANNED = "planned", "Planned"
@@ -200,12 +208,17 @@ class Project(models.Model):
         return f"{self.code} - {self.name}"
 
 
-class ProjectMember(models.Model):
+class ProjectMember(WorkspaceResourceMixin, models.Model):
     class RoleChoices(models.TextChoices):
         OWNER = "owner", "Owner"
         ADMIN = "admin", "Admin"
         MEMBER = "member", "Member"
         VIEWER = "viewer", "Viewer"
+
+    @property
+    def project_context(self):
+        return self.project
+
 
     id = models.UUIDField(
         primary_key=True,

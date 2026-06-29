@@ -3,9 +3,11 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from projects.models import Project
+from common.permissions import WorkspaceResourceMixin
 
 
-class Board(models.Model):
+class Board(WorkspaceResourceMixin, models.Model):
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -22,6 +24,10 @@ class Board(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def project_context(self):
+        return self.project
+
     class Meta:
         ordering = ["name"]
         constraints = [
@@ -34,7 +40,11 @@ class Board(models.Model):
         return self.name
 
 
-class Column(models.Model):
+class Column(WorkspaceResourceMixin, models.Model):
+    @property
+    def project_context(self):
+        return self.board.project
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -68,7 +78,11 @@ class Column(models.Model):
         return self.name
 
 
-class Task(models.Model):
+class Task(WorkspaceResourceMixin, models.Model):
+    @property
+    def project_context(self):
+        return self.project
+
     class Priority(models.TextChoices):
         LOW = "LOW", _("Low")
         MEDIUM = "MEDIUM", _("Medium")

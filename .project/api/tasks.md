@@ -23,6 +23,7 @@ Retrieve all Kanban boards for a specific project in a workspace.
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `project_id`: UUID of the target project.
+* **Access Control**: Creator + `owner`, `admin`, `member`, `viewer` roles.
 * **Success Response (200 OK)**:
   ```json
   [
@@ -47,6 +48,7 @@ Create a new Kanban board inside a project.
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `project_id`: UUID of the target project.
+* **Access Control**: Creator + `owner`, `admin` roles.
 * **Request Body**:
   ```json
   {
@@ -85,6 +87,7 @@ Fetch the details of a specific board.
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `board_id`: UUID of the target board.
+* **Access Control**: Creator + `owner`, `admin`, `member`, `viewer` roles.
 * **Success Response (200 OK)**:
   ```json
   {
@@ -107,6 +110,7 @@ Partially update a board's details (e.g. name or description).
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `board_id`: UUID of the target board.
+* **Access Control**: Creator + `owner`, `admin` roles.
 * **Request Body**:
   ```json
   {
@@ -136,8 +140,10 @@ Delete a specific board.
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `board_id`: UUID of the target board.
+* **Access Control**: Creator + `owner`, `admin` roles.
 * **Success Response (204 No Content)**:
   *No response body returned.*
+
 
 ---
 
@@ -151,6 +157,7 @@ Retrieve all columns for a specific board.
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `board_id`: UUID of the target board.
+* **Access Control**: Creator + `owner`, `admin`, `member`, `viewer` roles.
 * **Success Response (200 OK)**:
   ```json
   [
@@ -177,6 +184,7 @@ Create a new column on a board.
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `board_id`: UUID of the target board.
+* **Access Control**: Creator + `owner`, `admin` roles.
 * **Request Body**:
   ```json
   {
@@ -218,6 +226,7 @@ Reorder all columns for a specific board.
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `board_id`: UUID of the target board.
+* **Access Control**: Creator + `owner`, `admin` roles.
 * **Request Body**:
   ```json
   {
@@ -252,6 +261,7 @@ Reorder all columns for a specific board.
       "updated_at": "2026-06-29T12:10:00Z"
     }
   ]
+
   ```
 
 ---
@@ -264,6 +274,7 @@ Fetch the details of a specific column.
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `column_id`: UUID of the target column.
+* **Access Control**: Creator + `owner`, `admin`, `member`, `viewer` roles.
 * **Success Response (200 OK)**:
   ```json
   {
@@ -288,6 +299,7 @@ Partially update a column's details (e.g. name, category, or color). Note that t
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `column_id`: UUID of the target column.
+* **Access Control**: Creator + `owner`, `admin` roles.
 * **Request Body**:
   ```json
   {
@@ -327,6 +339,8 @@ Delete a specific column.
 * **URL Params**:
   - `workspace_id`: UUID of the active workspace.
   - `column_id`: UUID of the target column.
+* **Access Control**: Creator + `owner`, `admin` roles.
 * **Success Response (204 No Content)**:
   *No response body returned.*
+
 

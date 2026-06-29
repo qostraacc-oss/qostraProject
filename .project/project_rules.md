@@ -15,6 +15,8 @@ This document outlines the core development rules and best practices for the Qos
 - **Assigned User Scoping**: Users should only be allowed to modify task status or log time if they are assigned to the task/project, or hold manager/admin roles.
 - **Logged Time Validation**: All logged time durations MUST be positive. Timelogs MUST be associated with a valid task and user, and should be locked/closed once a billing period ends.
 - **Cross-Workspace Project Mapping**: When querying projects or project sub-resources (like boards, tasks, milestones) within a workspace context, you MUST use `Project.objects.for_workspace(workspace_id, user)` instead of filtering by `project__workspace_id` directly, to support external projects mapped to the member's workspace.
+- **Unified Workspace Isolation & Permissions**: For all workspace-scoped APIs and sub-resources (Boards, Columns, Members, Invitations, etc.), you MUST inherit from `WorkspaceResourceMixin` on the models and configure the `HasWorkspaceProjectAccess` permission class on the views. Use `read_roles`, `write_roles`, and `delete_roles` on the View classes to control role-based access.
+
 
 
 ## 3. Code Quality and Maintenance

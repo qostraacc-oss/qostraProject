@@ -1,11 +1,11 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from projects.models import Project, ProjectMember
+from projects.models import Project
 from projects.serializers import ProjectSerializer
+from common.permissions import HasWorkspaceProjectAccess
 
 
 class ProjectListCreateAPIView(APIView):
@@ -41,47 +41,21 @@ class ProjectDetailAPIView(APIView):
     """
     Retrieve, update, and soft-delete a project.
     """
+    permission_classes = [HasWorkspaceProjectAccess]
 
-    def get_object(self, workspace_id, pk, user):
-        from django.http import Http404
-
-        project = get_object_or_404(Project, pk=pk, archived_at__isnull=True)
-
-        is_creator = project.created_by == user and project.workspace_id == workspace_id
-        member = ProjectMember.objects.filter(
-            project=project,
-            user=user,
-            workspace_id=workspace_id,
-            removed_at__isnull=True,
-        ).first()
-
-        if not is_creator and not member:
-            if project.workspace_id != workspace_id:
-                raise Http404("No Project matches the given query.")
-            raise PermissionDenied("You do not have permission to access this project.")
-
-        return project
+    # Creators and owners can delete/archive projects. Admins and owners can update/edit.
+    delete_roles = ["owner"]
 
     def get(self, request, workspace_id, pk):
-        project = self.get_object(workspace_id, pk, request.user)
+        project = get_object_or_404(Project, pk=pk, archived_at__isnull=True)
+        self.check_object_permissions(request, project)
+        
         serializer = ProjectSerializer(project)
         return Response(serializer.data)
 
     def patch(self, request, workspace_id, pk):
-        project = self.get_object(workspace_id, pk, request.user)
-
-        # Only owners/admins or creator can update project
-        is_owner_or_admin = ProjectMember.objects.filter(
-            project=project,
-            user=request.user,
-            role__in=[ProjectMember.RoleChoices.OWNER, ProjectMember.RoleChoices.ADMIN],
-            removed_at__isnull=True,
-        ).exists()
-
-        if project.created_by != request.user and not is_owner_or_admin:
-            raise PermissionDenied(
-                "Only project owners, admins, or the creator can update the project."
-            )
+        project = get_object_or_404(Project, pk=pk, archived_at__isnull=True)
+        self.check_object_permissions(request, project)
 
         serializer = ProjectSerializer(
             project,
@@ -95,20 +69,8 @@ class ProjectDetailAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, workspace_id, pk):
-        project = self.get_object(workspace_id, pk, request.user)
-
-        # Only creator or owner can archive/delete project
-        is_owner = ProjectMember.objects.filter(
-            project=project,
-            user=request.user,
-            role=ProjectMember.RoleChoices.OWNER,
-            removed_at__isnull=True,
-        ).exists()
-
-        if project.created_by != request.user and not is_owner:
-            raise PermissionDenied(
-                "Only the project owner or creator can archive the project."
-            )
+        project = get_object_or_404(Project, pk=pk, archived_at__isnull=True)
+        self.check_object_permissions(request, project)
 
         project.archived_at = timezone.now()
         project.save()

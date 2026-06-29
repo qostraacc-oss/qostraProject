@@ -105,18 +105,22 @@ All endpoints are prefixed with the workspace scope:
 ### 1. List Project Members
 * **URL**: `/project/<uuid:workspace_id>/<uuid:project_id>/members/`
 * **Method**: `GET`
+* **Access Control**: Creator + `owner`, `admin`, `member`, `viewer` roles.
 * **Success Response**: `200 OK`
 
 ### 2. Retrieve Project Member
 * **URL**: `/project/<uuid:workspace_id>/<uuid:project_id>/members/<uuid:id>/`
 * **Method**: `GET`
+* **Access Control**: Creator + `owner`, `admin`, `member`, `viewer` roles.
 * **Success Response**: `200 OK`
 
 ### 3. Remove Project Member (Soft-Delete)
 * **URL**: `/project/<uuid:workspace_id>/<uuid:project_id>/members/<uuid:id>/`
 * **Method**: `DELETE`
+* **Access Control**: Creator + `owner`, `admin` roles.
 * **Success Response**: `204 No Content`
   * Sets the `removed_at` timestamp.
+
 
 ---
 
