@@ -3,6 +3,7 @@ from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 
+
 class HasWorkspaceProjectAccess(BasePermission):
     """
     Standard DRF permission class for verifying workspace-to-project mappings.
@@ -25,7 +26,10 @@ class HasWorkspaceProjectAccess(BasePermission):
         project_id = view.kwargs.get("project_id")
         if project_id:
             from projects.models import Project
-            project = get_object_or_404(Project, pk=project_id, archived_at__isnull=True)
+
+            project = get_object_or_404(
+                Project, pk=project_id, archived_at__isnull=True
+            )
             return self._verify_and_cache(request, workspace_id, project, view)
 
         return True
@@ -44,7 +48,7 @@ class HasWorkspaceProjectAccess(BasePermission):
 
     def _verify_and_cache(self, request, workspace_id, project, view):
         user = request.user
-        
+
         # Check cache to prevent duplicate queries on the same request lifecycle
         if hasattr(request, "_workspace_project_member_cache"):
             cache = request._workspace_project_member_cache
@@ -52,10 +56,13 @@ class HasWorkspaceProjectAccess(BasePermission):
                 return self._check_role(request, cache.get("member"), project, view)
 
         # 1. Creator Verification
-        is_creator = project.created_by == user and str(project.workspace_id) == str(workspace_id)
-        
+        is_creator = project.created_by == user and str(project.workspace_id) == str(
+            workspace_id
+        )
+
         # 2. Member Verification
         from projects.models import ProjectMember
+
         member = ProjectMember.objects.filter(
             project=project,
             user=user,
@@ -73,14 +80,14 @@ class HasWorkspaceProjectAccess(BasePermission):
         request._workspace_project_member_cache = {
             "project": project,
             "member": member,
-            "is_creator": is_creator
+            "is_creator": is_creator,
         }
 
         return self._check_role(request, member, project, view)
 
     def _check_role(self, request, member, project, view):
         is_creator = project.created_by == request.user
-        
+
         # Project creators have full bypass access
         if is_creator:
             return True
@@ -90,7 +97,7 @@ class HasWorkspaceProjectAccess(BasePermission):
             allowed_roles = getattr(view, "read_roles", self.default_read_roles)
         elif request.method == "DELETE":
             allowed_roles = getattr(view, "delete_roles", self.default_delete_roles)
-        else: # POST, PATCH, PUT
+        else:  # POST, PATCH, PUT
             allowed_roles = getattr(view, "write_roles", self.default_write_roles)
 
         is_authorized = member and member.role in allowed_roles

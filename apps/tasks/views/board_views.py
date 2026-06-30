@@ -11,6 +11,7 @@ class BoardListCreateAPIView(APIView):
     """
     List and Create boards under a specific project.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
 
     def get(self, request, workspace_id, project_id):
@@ -37,6 +38,7 @@ class BoardDetailAPIView(APIView):
     """
     Retrieve, update, and delete a board.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
 
     def get(self, request, workspace_id, board_id):
@@ -46,7 +48,7 @@ class BoardDetailAPIView(APIView):
             project__archived_at__isnull=True,
         )
         self.check_object_permissions(request, board)
-        
+
         serializer = BoardSerializer(board)
         return Response(serializer.data)
 

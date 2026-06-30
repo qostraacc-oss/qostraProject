@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-from projects.models import Project, ProjectInvitation, ProjectMember
+from projects.models import ProjectInvitation, ProjectMember
 from projects.serializers import ProjectInvitationSerializer
 from common.permissions import HasWorkspaceProjectAccess
 
@@ -17,6 +17,7 @@ class ProjectInvitationListCreateAPIView(APIView):
     Only project Owners/Admins can invite.
     Project members can list invitations.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
 
     # Members can view/list invitations, but only owners/admins can create them
@@ -55,8 +56,9 @@ class ResendInvitationAPIView(APIView):
     """
     Resends a pending project invitation (renews expires_at).
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
-    
+
     # Custom config: Only owners and admins can write/resend
     write_roles = ["owner", "admin"]
 
@@ -88,8 +90,9 @@ class RevokeInvitationAPIView(APIView):
     """
     Revokes/cancels a pending invitation.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
-    
+
     # Custom config: Only owners and admins can revoke
     write_roles = ["owner", "admin"]
 
@@ -116,6 +119,7 @@ class UserPendingInvitationsAPIView(APIView):
     """
     Lists pending invitations for the logged-in user.
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -138,6 +142,7 @@ class InvitationDetailAPIView(APIView):
     """
     View details of an invitation by the invitee. Required for acceptance screens.
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, invitation_id):
@@ -157,8 +162,9 @@ class WorkspaceInvitationDetailAPIView(APIView):
     """
     View details of an invitation by project Owners/Admins within a workspace.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
-    
+
     # Custom config: Only owners and admins can view workspace invitations
     read_roles = ["owner", "admin"]
 
@@ -175,6 +181,7 @@ class AcceptInvitationAPIView(APIView):
     """
     Accept a pending invitation.
     """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request, invitation_id):
@@ -236,6 +243,7 @@ class DeclineInvitationAPIView(APIView):
     """
     Decline a pending invitation.
     """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request, invitation_id):

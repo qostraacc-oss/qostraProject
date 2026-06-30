@@ -1,5 +1,6 @@
 import uuid
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from projects.models import Project
@@ -7,7 +8,6 @@ from common.permissions import WorkspaceResourceMixin
 
 
 class Board(WorkspaceResourceMixin, models.Model):
-
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -79,9 +79,28 @@ class Column(WorkspaceResourceMixin, models.Model):
 
 
 class Task(WorkspaceResourceMixin, models.Model):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
     @property
     def project_context(self):
         return self.project
+
+    # -------------------------
+    # Choices
+    # -------------------------
+
+    class Type(models.TextChoices):
+        TASK = "TASK", _("Task")
+        BUG = "BUG", _("Bug")
+        STORY = "STORY", _("Story")
+        EPIC = "EPIC", _("Epic")
+        FEATURE = "FEATURE", _("Feature")
+        IMPROVEMENT = "IMPROVEMENT", _("Improvement")
+        SPIKE = "SPIKE", _("Spike")
 
     class Priority(models.TextChoices):
         LOW = "LOW", _("Low")
@@ -89,26 +108,98 @@ class Task(WorkspaceResourceMixin, models.Model):
         HIGH = "HIGH", _("High")
         CRITICAL = "CRITICAL", _("Critical")
 
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks")
+    class Status(models.TextChoices):
+        TODO = "TODO", _("To Do")
+        IN_PROGRESS = "IN_PROGRESS", _("In Progress")
+        IN_REVIEW = "IN_REVIEW", _("In Review")
+        TESTING = "TESTING", _("Testing")
+        DONE = "DONE", _("Done")
+        BLOCKED = "BLOCKED", _("Blocked")
+        CANCELLED = "CANCELLED", _("Cancelled")
 
-    column = models.ForeignKey(Column, on_delete=models.PROTECT, related_name="tasks")
+    # -------------------------
+    # Identity
+    # -------------------------
 
-    number = models.PositiveIntegerField(db_index=True, editable=False)
-
-    parent = models.ForeignKey(
-        "self",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="subtasks",
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="tasks",
     )
+
+    number = models.PositiveIntegerField(
+        editable=False,
+        db_index=True,
+    )
+
+    type = models.CharField(
+        max_length=20,
+        choices=Type.choices,
+        default=Type.TASK,
+    )
+
+    # -------------------------
+    # Workflow
+    # -------------------------
+
+    column = models.ForeignKey(
+        Column,
+        on_delete=models.PROTECT,
+        related_name="tasks",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.TODO,
+    )
+
+    position = models.PositiveIntegerField(default=0)
+
+    # -------------------------
+    # Content
+    # -------------------------
 
     title = models.CharField(max_length=255)
 
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    # -------------------------
+    # Planning
+    # -------------------------
 
     priority = models.CharField(
-        max_length=20, choices=Priority.choices, default=Priority.MEDIUM
+        max_length=20,
+        choices=Priority.choices,
+        default=Priority.MEDIUM,
+    )
+
+    estimate = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Estimated hours",
+    )
+
+    time_spent = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=0,
+        help_text="Logged hours",
+    )
+
+    # -------------------------
+    # People
+    # -------------------------
+
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="reported_tasks",
     )
 
     assignee = models.ForeignKey(
@@ -119,36 +210,109 @@ class Task(WorkspaceResourceMixin, models.Model):
         related_name="assigned_tasks",
     )
 
-    reporter = models.ForeignKey(
+    watchers = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        related_name="reported_tasks",
+        blank=True,
+        related_name="watching_tasks",
     )
 
-    start_date = models.DateField(null=True, blank=True)
+    # -------------------------
+    # Dates
+    # -------------------------
 
-    due_date = models.DateField(null=True, blank=True)
+    start_date = models.DateField(
+        null=True,
+        blank=True,
+    )
 
-    position = models.PositiveIntegerField(default=0)
+    due_date = models.DateField(
+        null=True,
+        blank=True,
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    # -------------------------
+    # Metadata
+    # -------------------------
+
+    is_archived = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
-        ordering = ["position"]
+        ordering = [
+            "column",
+            "position",
+        ]
+
         constraints = [
             models.UniqueConstraint(
-                fields=["project", "number"], name="unique_project_task_number"
+                fields=["project", "number"],
+                name="unique_project_task_number",
             )
         ]
 
-    def save(self, *args, **kwargs):
-        if not self.number:
-            max_num = Task.objects.filter(project=self.project).aggregate(
-                max_val=models.Max("number")
-            )["max_val"]
-            self.number = (max_num or 0) + 1
-        super().save(*args, **kwargs)
-
     def __str__(self):
-        return self.title
+        return f"{self.project.code}-{self.number} {self.title}"
+
+    def clean(self):
+        super().clean()
+
+        if self.start_date and self.due_date and self.start_date > self.due_date:
+            raise ValidationError({"due_date": "Due date must be after start date."})
+
+        if self.column and self.column.board.project != self.project:
+            raise ValidationError(
+                _("The selected column does not belong to a board in this project.")
+            )
+
+        active_member_ids = self.project.active_member_ids
+
+        # Enforce that the assignee is an active project member
+        if self.assignee_id and self.assignee_id not in active_member_ids:
+            raise ValidationError(
+                {
+                    "assignee": _(
+                        "The assignee must be an active member of this project."
+                    )
+                }
+            )
+
+        # Enforce that the reporter is an active project member
+        if self.reporter_id and self.reporter_id not in active_member_ids:
+            raise ValidationError(
+                {
+                    "reporter": _(
+                        "The reporter must be an active member of this project."
+                    )
+                }
+            )
+
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        if is_new:
+            self.full_clean()
+
+        if not self.number:
+            from django.db import transaction
+
+            with transaction.atomic():
+                max_num = (
+                    Task.objects.select_for_update()
+                    .filter(project=self.project)
+                    .aggregate(max_val=models.Max("number"))["max_val"]
+                )
+                self.number = (max_num or 0) + 1
+                super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)

@@ -41,6 +41,7 @@ class ProjectDetailAPIView(APIView):
     """
     Retrieve, update, and soft-delete a project.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
 
     # Creators and owners can delete/archive projects. Admins and owners can update/edit.
@@ -49,7 +50,7 @@ class ProjectDetailAPIView(APIView):
     def get(self, request, workspace_id, pk):
         project = get_object_or_404(Project, pk=pk, archived_at__isnull=True)
         self.check_object_permissions(request, project)
-        
+
         serializer = ProjectSerializer(project)
         return Response(serializer.data)
 

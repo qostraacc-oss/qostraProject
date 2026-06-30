@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from projects.models import Project, ProjectMember
+from projects.models import ProjectMember
 from projects.serializers import ProjectMemberSerializer
 from common.permissions import HasWorkspaceProjectAccess
 
@@ -12,6 +12,7 @@ class ProjectMemberListAPIView(APIView):
     """
     List members under a specific project.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
 
     def get(self, request, workspace_id, project_id):
@@ -26,8 +27,9 @@ class ProjectMemberDetailAPIView(APIView):
     """
     Retrieve and remove a project member.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
-    
+
     # Custom config: delete operations restricted to owners and admins
     delete_roles = ["owner", "admin"]
 
@@ -40,7 +42,7 @@ class ProjectMemberDetailAPIView(APIView):
             project__archived_at__isnull=True,
         )
         self.check_object_permissions(request, member)
-        
+
         serializer = ProjectMemberSerializer(member)
         return Response(serializer.data)
 

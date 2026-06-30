@@ -11,6 +11,7 @@ class ColumnListCreateAPIView(APIView):
     """
     List and Create columns under a specific board.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
 
     def get(self, request, workspace_id, board_id):
@@ -49,6 +50,7 @@ class ColumnDetailAPIView(APIView):
     """
     Retrieve, update, and delete a column.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
 
     def get(self, request, workspace_id, column_id):
@@ -108,6 +110,7 @@ class ColumnReorderAPIView(APIView):
     """
     Reorder all columns for a specific board.
     """
+
     permission_classes = [HasWorkspaceProjectAccess]
 
     def patch(self, request, workspace_id, board_id):

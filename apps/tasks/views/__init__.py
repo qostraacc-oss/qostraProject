@@ -7,3 +7,8 @@ from tasks.views.column_views import (
     ColumnDetailAPIView as ColumnDetailAPIView,
     ColumnReorderAPIView as ColumnReorderAPIView,
 )
+from tasks.views.task_views import (
+    TaskListCreateAPIView as TaskListCreateAPIView,
+    TaskDetailAPIView as TaskDetailAPIView,
+    TaskMoveAPIView as TaskMoveAPIView,
+)

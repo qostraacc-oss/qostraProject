@@ -5,6 +5,9 @@ from tasks.views import (
     ColumnListCreateAPIView,
     ColumnDetailAPIView,
     ColumnReorderAPIView,
+    TaskListCreateAPIView,
+    TaskDetailAPIView,
+    TaskMoveAPIView,
 )
 
 urlpatterns = [
@@ -32,5 +35,21 @@ urlpatterns = [
         "<uuid:workspace_id>/columns/<uuid:column_id>/",
         ColumnDetailAPIView.as_view(),
         name="column-detail",
+    ),
+    # Task Routes
+    path(
+        "<uuid:workspace_id>/projects/<uuid:project_id>/tasks/",
+        TaskListCreateAPIView.as_view(),
+        name="task-list-create",
+    ),
+    path(
+        "<uuid:workspace_id>/tasks/<uuid:task_id>/",
+        TaskDetailAPIView.as_view(),
+        name="task-detail",
+    ),
+    path(
+        "<uuid:workspace_id>/tasks/<uuid:task_id>/move/",
+        TaskMoveAPIView.as_view(),
+        name="task-move",
     ),
 ]

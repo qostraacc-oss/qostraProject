@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Project, ProjectMember
+from .models import Project, ProjectMember, ProjectInvitation
 
 
 @admin.register(Project)
@@ -33,3 +33,6 @@ class ProjectMemberAdmin(admin.ModelAdmin):
     list_filter = ("role", "created_at", "removed_at")
     search_fields = ("project__name", "user__username", "user__email", "workspace_id")
     readonly_fields = ("created_at", "updated_at")
+
+
+admin.site.register(ProjectInvitation)

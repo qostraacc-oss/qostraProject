@@ -34,7 +34,6 @@ class Project(WorkspaceResourceMixin, models.Model):
     def project_context(self):
         return self
 
-
     class StatusChoices(models.TextChoices):
         PLANNED = "planned", "Planned"
         IN_PROGRESS = "in_progress", "In Progress"
@@ -201,6 +200,16 @@ class Project(WorkspaceResourceMixin, models.Model):
             )
 
     @property
+    def active_member_ids(self):
+        if not hasattr(self, "_active_member_ids_cache"):
+            self._active_member_ids_cache = set(
+                self.members.filter(removed_at__isnull=True).values_list(
+                    "user_id", flat=True
+                )
+            )
+        return self._active_member_ids_cache
+
+    @property
     def is_archived(self):
         return self.archived_at is not None
 
@@ -218,7 +227,6 @@ class ProjectMember(WorkspaceResourceMixin, models.Model):
     @property
     def project_context(self):
         return self.project
-
 
     id = models.UUIDField(
         primary_key=True,
