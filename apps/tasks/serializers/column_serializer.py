@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from tasks.models import Column
-from django.db import models, transaction
+from django.db import transaction
+from common.utils.position import validate_position, shift_positions_on_create
 
 
 class ColumnSerializer(serializers.ModelSerializer):
@@ -40,18 +41,14 @@ class ColumnSerializer(serializers.ModelSerializer):
                     {"name": "A column with this name already exists on this board."}
                 )
 
-        if self.instance and "position" in attrs:
-            raise serializers.ValidationError(
-                {
-                    "position": "Position cannot be modified directly. Use the bulk reorder endpoint instead."
-                }
+        position = attrs.get("position")
+        if board:
+            attrs["position"] = validate_position(
+                queryset=Column.objects.filter(board=board),
+                position=position,
+                instance=self.instance,
+                is_create=(self.instance is None),
             )
-
-        if "position" not in attrs and not self.instance and board:
-            max_pos = Column.objects.filter(board=board).aggregate(
-                models.Max("position")
-            )["position__max"]
-            attrs["position"] = 0 if max_pos is None else max_pos + 1
 
         return attrs
 
@@ -60,8 +57,6 @@ class ColumnSerializer(serializers.ModelSerializer):
         position = validated_data.get("position")
 
         with transaction.atomic():
-            # Shift all columns >= position up by 1
-            Column.objects.filter(board=board, position__gte=position).update(
-                position=models.F("position") + 1
-            )
+            queryset = Column.objects.filter(board=board)
+            shift_positions_on_create(queryset, position)
             return super().create(validated_data)

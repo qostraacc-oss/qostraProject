@@ -192,6 +192,14 @@ class Task(WorkspaceResourceMixin, models.Model):
         help_text="Logged hours",
     )
 
+    milestone = models.ForeignKey(
+        "milestones.Milestone",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tasks",
+    )
+
     # -------------------------
     # People
     # -------------------------
@@ -275,6 +283,24 @@ class Task(WorkspaceResourceMixin, models.Model):
             raise ValidationError(
                 _("The selected column does not belong to a board in this project.")
             )
+
+        if self.milestone:
+            if self.milestone.project != self.project:
+                raise ValidationError(
+                    {
+                        "milestone": _(
+                            "The selected milestone does not belong to this project."
+                        )
+                    }
+                )
+            if self.milestone.project.workspace_id != self.project.workspace_id:
+                raise ValidationError(
+                    {
+                        "milestone": _(
+                            "The selected milestone is in a different workspace."
+                        )
+                    }
+                )
 
         active_member_ids = self.project.active_member_ids
 

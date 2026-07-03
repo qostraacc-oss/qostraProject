@@ -207,8 +207,11 @@ Create a new column on a board.
     "updated_at": "2026-06-29T12:05:00Z"
   }
   ```
+* **Validation Rules**:
+  * **Contiguous Positioning**: If `position` is provided in the request payload, it cannot exceed the next available sequence index on the board (e.g. if column positions `0, 1` exist, `position` must be `<= 2`).
+  * **Automatic Shifting**: If a valid position is provided, the column is created at that index, and subsequent columns on the board are automatically shifted up by 1. If not provided, it is appended to the end of the board's column sequence.
 * **Error Response (400 Bad Request)**:
-  *Occurs if a column with the same name already exists on this board.*
+  *Occurs if a column with the same name already exists on this board, or if position exceeds next available sequence index.*
   ```json
   {
     "name": [
@@ -342,6 +345,7 @@ Delete a specific column.
 * **Access Control**: Creator + `owner`, `admin` roles.
 * **Success Response (204 No Content)**:
   *No response body returned.*
+  * Note: Deleting a column automatically shifts all subsequent columns on the board down by 1 to fill the position gap and maintain sequential integrity.
 
 
 ---
@@ -389,7 +393,14 @@ Retrieve tasks for a project.
       "completed_at": null,
       "is_archived": false,
       "created_at": "2026-06-30T13:59:00Z",
-      "updated_at": "2026-06-30T13:59:00Z"
+      "updated_at": "2026-06-30T13:59:00Z",
+      "milestone": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+      "milestone_detail": {
+        "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "name": "Phase 1: Backend Setup",
+        "color": "blue",
+        "status": "active"
+      }
     }
   ]
   ```
@@ -419,9 +430,14 @@ Create a new task inside a project.
     "due_date": "2026-07-05",
     "watchers": [
       "d748f219-c09a-4c9f-8561-12503ea29ad3"
-    ]
+    ],
+    "milestone": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+    "position": 0 // optional (must be contiguous: <= next available sequence index in the column)
   }
   ```
+* **Validation Rules**:
+  * **Contiguous Positioning**: If `position` is provided in the request payload, it cannot exceed the next available sequence index in the target column (e.g. if task positions `0, 1` exist, `position` must be `<= 2`).
+  * **Automatic Shifting**: If a valid position is provided, the task is created at that index, and subsequent tasks in that column are automatically shifted up by 1. If not provided, it is appended to the end of the column's sequence.
 * **Success Response (201 Created)**:
   ```json
   {
@@ -447,7 +463,14 @@ Create a new task inside a project.
     "completed_at": null,
     "is_archived": false,
     "created_at": "2026-06-30T13:59:00Z",
-    "updated_at": "2026-06-30T13:59:00Z"
+    "updated_at": "2026-06-30T13:59:00Z",
+    "milestone": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+    "milestone_detail": {
+      "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+      "name": "Phase 1: Backend Setup",
+      "color": "blue",
+      "status": "active"
+    }
   }
   ```
 
@@ -487,7 +510,14 @@ Fetch the details of a specific task.
     "completed_at": null,
     "is_archived": false,
     "created_at": "2026-06-30T13:59:00Z",
-    "updated_at": "2026-06-30T13:59:00Z"
+    "updated_at": "2026-06-30T13:59:00Z",
+    "milestone": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+    "milestone_detail": {
+      "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+      "name": "Phase 1: Backend Setup",
+      "color": "blue",
+      "status": "active"
+    }
   }
   ```
 
@@ -506,7 +536,8 @@ Partially update a task's details. Direct updates to `position` or `column` are 
   ```json
   {
     "title": "Configure Redis Cache (Updated)",
-    "estimate": "8.00"
+    "estimate": "8.00",
+    "milestone": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
   }
   ```
 * **Success Response (200 OK)**:
@@ -534,7 +565,14 @@ Partially update a task's details. Direct updates to `position` or `column` are 
     "completed_at": null,
     "is_archived": false,
     "created_at": "2026-06-30T13:59:00Z",
-    "updated_at": "2026-06-30T14:15:00Z"
+    "updated_at": "2026-06-30T14:15:00Z",
+    "milestone": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+    "milestone_detail": {
+      "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+      "name": "Phase 2: Frontend Setup",
+      "color": "purple",
+      "status": "planned"
+    }
   }
   ```
 * **Error Response (400 Bad Request)**:
@@ -607,6 +645,7 @@ Delete a specific task.
 * **Access Control**: Creator + `owner`, `admin`. Standard `member` can only delete if they are the task's assignee.
 * **Success Response (204 No Content)**:
   *No response body returned.*
+  * Note: Deleting a task automatically shifts all subsequent tasks in the same column down by 1 to fill the position gap and maintain contiguous order.
 
 
 

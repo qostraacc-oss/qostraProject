@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from tasks.models import Board, Column
 from tasks.serializers import ColumnSerializer
 from common.permissions import HasWorkspaceProjectAccess
+from common.utils.position import shift_positions_on_delete
 
 
 class ColumnListCreateAPIView(APIView):
@@ -91,17 +92,15 @@ class ColumnDetailAPIView(APIView):
         )
         self.check_object_permissions(request, column)
 
-        from django.db import transaction, models
+        from django.db import transaction
 
         deleted_position = column.position
         board = column.board
 
         with transaction.atomic():
             column.delete()
-            # Shift remaining columns with position > deleted_position down by 1
-            Column.objects.filter(board=board, position__gt=deleted_position).update(
-                position=models.F("position") - 1
-            )
+            queryset = Column.objects.filter(board=board)
+            shift_positions_on_delete(queryset, deleted_position)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

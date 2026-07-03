@@ -7,6 +7,7 @@ from django.db import transaction, models
 from tasks.models import Task, Column
 from tasks.serializers import TaskSerializer
 from common.permissions import HasWorkspaceProjectAccess
+from common.utils.position import shift_positions_on_delete
 
 
 def check_task_assignment_permission(request, task):
@@ -36,7 +37,7 @@ class TaskListCreateAPIView(APIView):
         # Access is checked by permission_classes checking project_id in URL
         tasks = (
             Task.objects.filter(project_id=project_id)
-            .select_related("assignee", "reporter")
+            .select_related("assignee", "reporter", "milestone")
             .prefetch_related("watchers")
         )
 
@@ -131,10 +132,8 @@ class TaskDetailAPIView(APIView):
 
         with transaction.atomic():
             task.delete()
-            # Shift remaining tasks with position > deleted_position down by 1
-            Task.objects.filter(column=column, position__gt=deleted_position).update(
-                position=models.F("position") - 1
-            )
+            queryset = Task.objects.filter(column=column)
+            shift_positions_on_delete(queryset, deleted_position)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

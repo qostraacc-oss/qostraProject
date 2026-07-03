@@ -1,10 +1,20 @@
 from rest_framework import serializers
-from django.db import models, transaction
+from django.db import transaction
 from tasks.models import Task
+from common.utils.position import validate_position, shift_positions_on_create
+
+
+class TaskMilestoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        from milestones.models import Milestone
+
+        model = Milestone
+        fields = ["id", "name", "color", "status"]
 
 
 class TaskSerializer(serializers.ModelSerializer):
     position = serializers.IntegerField(required=False)
+    milestone_detail = TaskMilestoneSerializer(source="milestone", read_only=True)
 
     class Meta:
         model = Task
@@ -30,6 +40,8 @@ class TaskSerializer(serializers.ModelSerializer):
             "is_archived",
             "created_at",
             "updated_at",
+            "milestone",
+            "milestone_detail",
         ]
         read_only_fields = [
             "id",
@@ -78,6 +90,22 @@ class TaskSerializer(serializers.ModelSerializer):
                             }
                         )
 
+        # 3. Verify milestone alignment
+        milestone = attrs.get("milestone") or (
+            self.instance.milestone if self.instance else None
+        )
+        if milestone and project:
+            if milestone.project != project:
+                raise serializers.ValidationError(
+                    {
+                        "milestone": "The selected milestone does not belong to this project."
+                    }
+                )
+            if milestone.project.workspace_id != project.workspace_id:
+                raise serializers.ValidationError(
+                    {"milestone": "The selected milestone is in a different workspace."}
+                )
+
         # 4. Verify dates
         start_date = attrs.get("start_date") or (
             self.instance.start_date if self.instance else None
@@ -92,12 +120,6 @@ class TaskSerializer(serializers.ModelSerializer):
 
         # 5. Prevent direct updates to position and column via standard serializer save
         if self.instance:
-            if "position" in attrs:
-                raise serializers.ValidationError(
-                    {
-                        "position": "Position cannot be modified directly. Use the move endpoint instead."
-                    }
-                )
             if "column" in attrs:
                 raise serializers.ValidationError(
                     {
@@ -105,22 +127,22 @@ class TaskSerializer(serializers.ModelSerializer):
                     }
                 )
 
-        # 6. Auto-calculate position on creation
-        if not self.instance and attrs.get("position") is None and column:
-            max_pos = Task.objects.filter(column=column).aggregate(
-                models.Max("position")
-            )["position__max"]
-            attrs["position"] = 0 if max_pos is None else max_pos + 1
+        position = attrs.get("position")
+        if column:
+            attrs["position"] = validate_position(
+                queryset=Task.objects.filter(column=column),
+                position=position,
+                instance=self.instance,
+                is_create=(self.instance is None),
+            )
 
         return attrs
 
     def create(self, validated_data):
         column = validated_data.get("column")
-        position = validated_data.get("position", 0)
+        position = validated_data.get("position")
 
         with transaction.atomic():
-            # Shift all tasks in the column >= position up by 1
-            Task.objects.filter(column=column, position__gte=position).update(
-                position=models.F("position") + 1
-            )
+            queryset = Task.objects.filter(column=column)
+            shift_positions_on_create(queryset, position)
             return super().create(validated_data)
