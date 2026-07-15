@@ -282,4 +282,3 @@ class ProjectAPITestCase(TestCase):
         }
         response_bad = self.client.post(url, data_bad, format="json")
         self.assertEqual(response_bad.status_code, status.HTTP_400_BAD_REQUEST)
-

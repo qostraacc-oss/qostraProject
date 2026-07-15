@@ -214,8 +214,6 @@ class Task(WorkspaceResourceMixin, models.Model):
         related_name="tasks",
     )
 
-
-
     # -------------------------
     # People
     # -------------------------
@@ -286,6 +284,16 @@ class Task(WorkspaceResourceMixin, models.Model):
             )
         ]
 
+    def update_time_spent(self):
+        from django.db.models import Sum
+        from decimal import Decimal
+
+        total = self.timelogs.aggregate(total_spent=Sum("duration"))[
+            "total_spent"
+        ] or Decimal("0.00")
+        self.time_spent = total
+        self.save(update_fields=["time_spent"])
+
     def __str__(self):
         return f"{self.project.code}-{self.number} {self.title}"
 
@@ -329,11 +337,7 @@ class Task(WorkspaceResourceMixin, models.Model):
                 )
             if self.sprint.project.workspace_id != self.project.workspace_id:
                 raise ValidationError(
-                    {
-                        "sprint": _(
-                            "The selected sprint is in a different workspace."
-                        )
-                    }
+                    {"sprint": _("The selected sprint is in a different workspace.")}
                 )
 
         active_member_ids = self.project.active_member_ids

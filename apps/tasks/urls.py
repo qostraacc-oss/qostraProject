@@ -53,5 +53,3 @@ urlpatterns = [
         name="task-move",
     ),
 ]
-
-

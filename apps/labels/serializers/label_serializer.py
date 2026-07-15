@@ -2,6 +2,7 @@ from rest_framework import serializers
 from labels.models import Label
 from common.utils.position import validate_position
 
+
 class LabelSerializer(serializers.ModelSerializer):
     position = serializers.IntegerField(required=False)
     is_archived = serializers.BooleanField(read_only=True)
@@ -54,7 +55,9 @@ class LabelSerializer(serializers.ModelSerializer):
 
         position = attrs.get("position")
         if workspace_id:
-            queryset = Label.objects.filter(workspace_id=workspace_id, project=project, is_archived=False)
+            queryset = Label.objects.filter(
+                workspace_id=workspace_id, project=project, is_archived=False
+            )
             attrs["position"] = validate_position(
                 queryset=queryset,
                 position=position,

@@ -1,5 +1,9 @@
 from django.urls import path
-from labels.views import LabelListCreateAPIView, LabelDetailAPIView, AllLabelsListAPIView
+from labels.views import (
+    LabelListCreateAPIView,
+    LabelDetailAPIView,
+    AllLabelsListAPIView,
+)
 
 
 urlpatterns = [
@@ -24,4 +28,3 @@ urlpatterns = [
         name="label-detail",
     ),
 ]
-

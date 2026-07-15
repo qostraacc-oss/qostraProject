@@ -185,4 +185,3 @@ class IsWorkspaceOrProjectAdmin(BasePermission):
             removed_at__isnull=True,
         ).exists()
         return is_creator or is_admin
-

@@ -88,5 +88,6 @@ urlpatterns = [
     path("", include("apps.labels.urls")),
     # Sprints URLs
     path("", include("apps.sprints.urls")),
+    # Timelogs URLs
+    path("", include("apps.timelogs.urls")),
 ]
-

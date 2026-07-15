@@ -770,7 +770,9 @@ class LabelAPITestCase(TestCase):
         self.assertEqual(response_detail.status_code, status.HTTP_200_OK)
 
         # Update
-        response_patch = self.client.patch(detail_url, {"name": "Global Issue"}, format="json")
+        response_patch = self.client.patch(
+            detail_url, {"name": "Global Issue"}, format="json"
+        )
         self.assertEqual(response_patch.status_code, status.HTTP_200_OK)
         self.assertEqual(response_patch.data["name"], "Global Issue")
 
@@ -796,14 +798,15 @@ class LabelAPITestCase(TestCase):
         self.assertEqual(response.data["name"], "Niche Bug")
         self.assertEqual(str(response.data["project"]), str(self.project.id))
 
-
     def test_hex_color_validation(self):
         url = reverse(
             "workspace-label-list-create",
             kwargs={"workspace_id": self.workspace_id},
         )
         # Invalid color
-        response = self.client.post(url, {"name": "Bad Color", "color": "red"}, format="json")
+        response = self.client.post(
+            url, {"name": "Bad Color", "color": "red"}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_assign_labels_to_task(self):
@@ -873,5 +876,3 @@ class LabelAPITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Should return both labels
         self.assertEqual(len(response.data), 2)
-
-

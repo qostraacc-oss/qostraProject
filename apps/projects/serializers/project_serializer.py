@@ -56,7 +56,6 @@ class ProjectSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-
     def validate(self, attrs):
         workspace_id = self.context.get("workspace_id")
         code = attrs.get("code") or (self.instance.code if self.instance else None)
@@ -92,16 +91,21 @@ class ProjectSerializer(serializers.ModelSerializer):
             for label in labels:
                 if str(label.workspace_id) != str(workspace_id):
                     raise serializers.ValidationError(
-                        {"labels": f"Label '{label.name}' does not belong to this workspace."}
+                        {
+                            "labels": f"Label '{label.name}' does not belong to this workspace."
+                        }
                     )
                 if label.project and self.instance and label.project != self.instance:
                     raise serializers.ValidationError(
-                        {"labels": f"Label '{label.name}' is project-scoped to another project."}
+                        {
+                            "labels": f"Label '{label.name}' is project-scoped to another project."
+                        }
                     )
                 if label.is_archived:
                     raise serializers.ValidationError(
-                        {"labels": f"Label '{label.name}' is archived and cannot be assigned."}
+                        {
+                            "labels": f"Label '{label.name}' is archived and cannot be assigned."
+                        }
                     )
 
         return attrs
-

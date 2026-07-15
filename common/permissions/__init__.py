@@ -4,4 +4,3 @@ from common.permissions.workspace_permissions import (
     IsWorkspaceMember as IsWorkspaceMember,
     IsWorkspaceOrProjectAdmin as IsWorkspaceOrProjectAdmin,
 )
-

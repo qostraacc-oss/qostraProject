@@ -3,4 +3,3 @@ from labels.views.label_views import (
     LabelDetailAPIView as LabelDetailAPIView,
     AllLabelsListAPIView as AllLabelsListAPIView,
 )
-

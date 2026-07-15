@@ -12,5 +12,3 @@ from tasks.views.task_views import (
     TaskDetailAPIView as TaskDetailAPIView,
     TaskMoveAPIView as TaskMoveAPIView,
 )
-
-

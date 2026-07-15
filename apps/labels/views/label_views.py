@@ -9,7 +9,6 @@ from projects.models import Project
 from common.permissions import IsWorkspaceMember, IsWorkspaceOrProjectAdmin
 
 
-
 class LabelListCreateAPIView(APIView):
     """
     List and Create labels.
@@ -50,9 +49,7 @@ class LabelListCreateAPIView(APIView):
         )
         if serializer.is_valid():
             label = serializer.save(workspace_id=workspace_id, project=project)
-            return Response(
-                LabelSerializer(label).data, status=status.HTTP_201_CREATED
-            )
+            return Response(LabelSerializer(label).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -115,4 +112,3 @@ class AllLabelsListAPIView(APIView):
         labels = Label.objects.filter(workspace_id=workspace_id, is_archived=False)
         serializer = LabelSerializer(labels, many=True)
         return Response(serializer.data)
-

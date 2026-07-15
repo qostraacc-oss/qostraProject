@@ -5,8 +5,6 @@ from tasks.models import Task
 from labels.models import Label
 
 
-
-
 class TaskMilestoneSerializer(serializers.ModelSerializer):
     class Meta:
         from milestones.models import Milestone
@@ -27,7 +25,6 @@ class TaskSprintSerializer(serializers.ModelSerializer):
 
         model = Sprint
         fields = ["id", "name", "status"]
-
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -80,7 +77,6 @@ class TaskSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-
 
     def validate(self, attrs):
         project = self.context.get("project") or (
@@ -143,9 +139,7 @@ class TaskSerializer(serializers.ModelSerializer):
         if sprint and project:
             if sprint.project != project:
                 raise serializers.ValidationError(
-                    {
-                        "sprint": "The selected sprint does not belong to this project."
-                    }
+                    {"sprint": "The selected sprint does not belong to this project."}
                 )
             if sprint.project.workspace_id != project.workspace_id:
                 raise serializers.ValidationError(
@@ -188,19 +182,24 @@ class TaskSerializer(serializers.ModelSerializer):
             for label in labels:
                 if str(label.workspace_id) != str(project.workspace_id):
                     raise serializers.ValidationError(
-                        {"labels": f"Label '{label.name}' does not belong to this workspace."}
+                        {
+                            "labels": f"Label '{label.name}' does not belong to this workspace."
+                        }
                     )
                 if label.project and label.project != project:
                     raise serializers.ValidationError(
-                        {"labels": f"Label '{label.name}' does not belong to this project."}
+                        {
+                            "labels": f"Label '{label.name}' does not belong to this project."
+                        }
                     )
                 if label.is_archived:
                     raise serializers.ValidationError(
-                        {"labels": f"Label '{label.name}' is archived and cannot be assigned."}
+                        {
+                            "labels": f"Label '{label.name}' is archived and cannot be assigned."
+                        }
                     )
 
         return attrs
-
 
     def create(self, validated_data):
         column = validated_data.get("column")
