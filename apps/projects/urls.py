@@ -84,4 +84,7 @@ urlpatterns = [
     path("", include("apps.tasks.urls")),
     # Milestones URLs
     path("", include("apps.milestones.urls")),
+    # Labels URLs
+    path("", include("apps.labels.urls")),
 ]
+

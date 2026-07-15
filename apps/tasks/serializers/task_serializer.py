@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from django.db import transaction
-from tasks.models import Task
 from common.utils.position import validate_position, shift_positions_on_create
+from tasks.models import Task
+from labels.models import Label
+
+
 
 
 class TaskMilestoneSerializer(serializers.ModelSerializer):
@@ -12,9 +15,21 @@ class TaskMilestoneSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "color", "status"]
 
 
+class TaskLabelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Label
+        fields = ["id", "name", "color", "slug"]
+
+
 class TaskSerializer(serializers.ModelSerializer):
     position = serializers.IntegerField(required=False)
     milestone_detail = TaskMilestoneSerializer(source="milestone", read_only=True)
+    labels = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Label.objects.all(),
+        required=False,
+    )
+    labels_detail = TaskLabelSerializer(source="labels", many=True, read_only=True)
 
     class Meta:
         model = Task
@@ -42,6 +57,8 @@ class TaskSerializer(serializers.ModelSerializer):
             "updated_at",
             "milestone",
             "milestone_detail",
+            "labels",
+            "labels_detail",
         ]
         read_only_fields = [
             "id",
@@ -51,6 +68,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
 
     def validate(self, attrs):
         project = self.context.get("project") or (
@@ -136,7 +154,25 @@ class TaskSerializer(serializers.ModelSerializer):
                 is_create=(self.instance is None),
             )
 
+        # 6. Verify labels are valid for the project & workspace
+        labels = attrs.get("labels")
+        if labels is not None and project:
+            for label in labels:
+                if str(label.workspace_id) != str(project.workspace_id):
+                    raise serializers.ValidationError(
+                        {"labels": f"Label '{label.name}' does not belong to this workspace."}
+                    )
+                if label.project and label.project != project:
+                    raise serializers.ValidationError(
+                        {"labels": f"Label '{label.name}' does not belong to this project."}
+                    )
+                if label.is_archived:
+                    raise serializers.ValidationError(
+                        {"labels": f"Label '{label.name}' is archived and cannot be assigned."}
+                    )
+
         return attrs
+
 
     def create(self, validated_data):
         column = validated_data.get("column")

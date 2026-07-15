@@ -710,3 +710,168 @@ class TaskAPITestCase(TestCase):
             format="json",
         )
         self.assertEqual(response_move.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class LabelAPITestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username="labeluser",
+            email="labeluser@example.com",
+            password="testpassword123",
+        )
+        self.client.force_authenticate(user=self.user)
+        self.workspace_id = uuid.uuid4()
+
+        # Create a Project
+        self.project = Project.objects.create(
+            workspace_id=self.workspace_id,
+            created_by=self.user,
+            name="Label Test Project",
+            code="LTP",
+        )
+        # Seed default board & column
+        self.board = Board.objects.create(project=self.project, name="Board")
+        self.column = Column.objects.create(board=self.board, name="To Do", position=0)
+
+    def test_workspace_label_crud(self):
+        # Create a workspace label
+        url = reverse(
+            "workspace-label-list-create",
+            kwargs={"workspace_id": self.workspace_id},
+        )
+        data = {
+            "name": "Global Bug",
+            "color": "#EF4444",
+            "description": "Critical issues",
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["name"], "Global Bug")
+        self.assertIsNone(response.data["project"])
+
+        label_id = response.data["id"]
+
+        # Unique name constraint check
+        response_dup = self.client.post(url, data, format="json")
+        self.assertEqual(response_dup.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # List workspace labels
+        response_list = self.client.get(url)
+        self.assertEqual(response_list.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_list.data), 1)
+
+        # Get detail
+        detail_url = reverse(
+            "label-detail",
+            kwargs={"workspace_id": self.workspace_id, "label_id": label_id},
+        )
+        response_detail = self.client.get(detail_url)
+        self.assertEqual(response_detail.status_code, status.HTTP_200_OK)
+
+        # Update
+        response_patch = self.client.patch(detail_url, {"name": "Global Issue"}, format="json")
+        self.assertEqual(response_patch.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_patch.data["name"], "Global Issue")
+
+        # Delete (archive)
+        response_delete = self.client.delete(detail_url)
+        self.assertEqual(response_delete.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Fetching it should now return 404
+        response_get_deleted = self.client.get(detail_url)
+        self.assertEqual(response_get_deleted.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_project_label_creation(self):
+        url = reverse(
+            "project-label-list-create",
+            kwargs={"workspace_id": self.workspace_id, "project_id": self.project.id},
+        )
+        data = {
+            "name": "Niche Bug",
+            "color": "#10B981",
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["name"], "Niche Bug")
+        self.assertEqual(str(response.data["project"]), str(self.project.id))
+
+
+    def test_hex_color_validation(self):
+        url = reverse(
+            "workspace-label-list-create",
+            kwargs={"workspace_id": self.workspace_id},
+        )
+        # Invalid color
+        response = self.client.post(url, {"name": "Bad Color", "color": "red"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_assign_labels_to_task(self):
+        from labels.models import Label
+
+        # Create a workspace label and a project label
+        ws_label = Label.objects.create(
+            workspace_id=self.workspace_id,
+            name="WS Label",
+            color="#FF0000",
+        )
+        proj_label = Label.objects.create(
+            workspace_id=self.workspace_id,
+            project=self.project,
+            name="Proj Label",
+            color="#00FF00",
+        )
+        # Create a label belonging to another workspace
+        foreign_label = Label.objects.create(
+            workspace_id=uuid.uuid4(),
+            name="Foreign Label",
+            color="#0000FF",
+        )
+
+        # Create Task
+        task_url = reverse(
+            "task-list-create",
+            kwargs={"workspace_id": self.workspace_id, "project_id": self.project.id},
+        )
+        task_data = {
+            "column": self.column.id,
+            "title": "Task with Labels",
+            "labels": [ws_label.id, proj_label.id],
+        }
+        response = self.client.post(task_url, task_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(response.data["labels"]), 2)
+
+        # Attempt to assign foreign label
+        task_data_bad = {
+            "column": self.column.id,
+            "title": "Task with Bad Labels",
+            "labels": [foreign_label.id],
+        }
+        response_bad = self.client.post(task_url, task_data_bad, format="json")
+        self.assertEqual(response_bad.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_all_labels_list(self):
+        from labels.models import Label
+
+        # Create a workspace-wide label
+        Label.objects.create(
+            workspace_id=self.workspace_id,
+            name="Workspace Bug",
+            color="#FF0000",
+        )
+        # Create a project-scoped label
+        Label.objects.create(
+            workspace_id=self.workspace_id,
+            project=self.project,
+            name="Project Niche",
+            color="#00FF00",
+        )
+
+        url = reverse("all-labels-list", kwargs={"workspace_id": self.workspace_id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Should return both labels
+        self.assertEqual(len(response.data), 2)
+
+

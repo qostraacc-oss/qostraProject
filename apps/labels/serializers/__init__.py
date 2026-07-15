@@ -1,0 +1,1 @@
+from labels.serializers.label_serializer import LabelSerializer as LabelSerializer

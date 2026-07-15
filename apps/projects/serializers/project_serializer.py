@@ -1,6 +1,13 @@
 from rest_framework import serializers
 from projects.models import Project
 from projects.serializers.member_serializer import ProjectMemberSerializer
+from labels.models import Label
+
+
+class ProjectLabelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Label
+        fields = ["id", "name", "color", "slug"]
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -8,6 +15,12 @@ class ProjectSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(
         source="created_by.username", read_only=True
     )
+    labels = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Label.objects.all(),
+        required=False,
+    )
+    labels_detail = ProjectLabelSerializer(source="labels", many=True, read_only=True)
 
     class Meta:
         model = Project
@@ -30,6 +43,8 @@ class ProjectSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "members",
+            "labels",
+            "labels_detail",
         ]
         read_only_fields = [
             "id",
@@ -40,6 +55,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
 
     def validate(self, attrs):
         workspace_id = self.context.get("workspace_id")
@@ -70,4 +86,22 @@ class ProjectSerializer(serializers.ModelSerializer):
                 workspace_id=workspace_id, client_id=client_id, auth_header=auth_header
             )
 
+        # Validate labels scoping
+        labels = attrs.get("labels")
+        if labels is not None and workspace_id:
+            for label in labels:
+                if str(label.workspace_id) != str(workspace_id):
+                    raise serializers.ValidationError(
+                        {"labels": f"Label '{label.name}' does not belong to this workspace."}
+                    )
+                if label.project and self.instance and label.project != self.instance:
+                    raise serializers.ValidationError(
+                        {"labels": f"Label '{label.name}' is project-scoped to another project."}
+                    )
+                if label.is_archived:
+                    raise serializers.ValidationError(
+                        {"labels": f"Label '{label.name}' is archived and cannot be assigned."}
+                    )
+
         return attrs
+

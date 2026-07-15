@@ -16,6 +16,10 @@ This document outlines the core development rules and best practices for the Qos
 - **Logged Time Validation**: All logged time durations MUST be positive. Timelogs MUST be associated with a valid task and user, and should be locked/closed once a billing period ends.
 - **Cross-Workspace Project Mapping**: When querying projects or project sub-resources (like boards, tasks, milestones) within a workspace context, you MUST use `Project.objects.for_workspace(workspace_id, user)` instead of filtering by `project__workspace_id` directly, to support external projects mapped to the member's workspace.
 - **Unified Workspace Isolation & Permissions**: For all workspace-scoped APIs and sub-resources (Boards, Columns, Members, Invitations, etc.), you MUST inherit from `WorkspaceResourceMixin` on the models and configure the `HasWorkspaceProjectAccess` permission class on the views. Use `read_roles`, `write_roles`, and `delete_roles` on the View classes to control role-based access.
+- **Workspace-Level Permissions vs. Project-Scoped Permissions**:
+  - Use `HasWorkspaceProjectAccess` when the URL contains a specific `project_id`. This secures resources tied directly to a single project.
+  - Use `IsWorkspaceMember` (for read/GET) and `IsWorkspaceOrProjectAdmin` (for write/POST/PATCH/DELETE) when a resource belongs to the workspace context generally (e.g. workspace-wide labels, clients) and does not have a single project context, verifying membership against any active project or project creation in that workspace.
+
 
 
 

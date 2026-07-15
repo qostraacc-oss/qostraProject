@@ -135,10 +135,17 @@ class Project(WorkspaceResourceMixin, models.Model):
 
     # Audit
     created_at = models.DateTimeField(auto_now_add=True)
-
     updated_at = models.DateTimeField(auto_now=True)
 
+    labels = models.ManyToManyField(
+
+        "labels.Label",
+        blank=True,
+        related_name="projects",
+    )
+
     class Meta:
+
         verbose_name = "Project"
         verbose_name_plural = "Projects"
 

@@ -200,6 +200,14 @@ class Task(WorkspaceResourceMixin, models.Model):
         related_name="tasks",
     )
 
+    labels = models.ManyToManyField(
+        "labels.Label",
+        blank=True,
+        related_name="tasks",
+    )
+
+
+
     # -------------------------
     # People
     # -------------------------

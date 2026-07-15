@@ -106,3 +106,83 @@ class HasWorkspaceProjectAccess(BasePermission):
             raise PermissionDenied("You do not have permission to perform this action.")
 
         return True
+
+
+class IsWorkspaceMember(BasePermission):
+    """
+    Permission class checking if the user is a member of the workspace.
+    A user is a member of a workspace if they have an active project membership
+    in that workspace or have created a project in that workspace.
+    """
+
+    def has_permission(self, request, view):
+        workspace_id = view.kwargs.get("workspace_id")
+        if not workspace_id:
+            return False
+
+        # Check if project_id is present to enforce project-level membership
+        project_id = view.kwargs.get("project_id")
+        from projects.models import Project, ProjectMember
+
+        if project_id:
+            is_member = ProjectMember.objects.filter(
+                project_id=project_id,
+                user=request.user,
+                workspace_id=workspace_id,
+                removed_at__isnull=True,
+            ).exists()
+            is_creator = Project.objects.filter(
+                id=project_id, workspace_id=workspace_id, created_by=request.user
+            ).exists()
+            return is_member or is_creator
+
+        # Otherwise verify membership in any project in the workspace
+        is_ws_member = ProjectMember.objects.filter(
+            user=request.user,
+            workspace_id=workspace_id,
+            removed_at__isnull=True,
+        ).exists()
+        is_ws_creator = Project.objects.filter(
+            workspace_id=workspace_id, created_by=request.user
+        ).exists()
+        return is_ws_member or is_ws_creator
+
+
+class IsWorkspaceOrProjectAdmin(BasePermission):
+    """
+    Permission checking if the user is an owner or admin in the workspace or project.
+    """
+
+    def has_permission(self, request, view):
+        workspace_id = view.kwargs.get("workspace_id")
+        if not workspace_id:
+            return False
+
+        project_id = view.kwargs.get("project_id")
+        from projects.models import Project, ProjectMember
+
+        if project_id:
+            is_creator = Project.objects.filter(
+                id=project_id, workspace_id=workspace_id, created_by=request.user
+            ).exists()
+            is_admin = ProjectMember.objects.filter(
+                project_id=project_id,
+                user=request.user,
+                workspace_id=workspace_id,
+                role__in=["owner", "admin"],
+                removed_at__isnull=True,
+            ).exists()
+            return is_creator or is_admin
+
+        # Workspace-level check
+        is_creator = Project.objects.filter(
+            workspace_id=workspace_id, created_by=request.user
+        ).exists()
+        is_admin = ProjectMember.objects.filter(
+            user=request.user,
+            workspace_id=workspace_id,
+            role__in=["owner", "admin"],
+            removed_at__isnull=True,
+        ).exists()
+        return is_creator or is_admin
+

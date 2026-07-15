@@ -247,3 +247,39 @@ class ProjectAPITestCase(TestCase):
         response2 = self.client.post(url, data2, format="json")
         self.assertEqual(response2.status_code, status.HTTP_201_CREATED)
         self.assertEqual(mock_get.call_count, 1)  # Still 1 call total
+
+    def test_project_labels(self):
+        from labels.models import Label
+
+        # Create workspace label
+        ws_label = Label.objects.create(
+            workspace_id=self.workspace_id,
+            name="WS Label Project",
+            color="#FF0000",
+        )
+        # Create a label belonging to another workspace
+        foreign_label = Label.objects.create(
+            workspace_id=uuid.uuid4(),
+            name="Foreign Label Project",
+            color="#0000FF",
+        )
+
+        url = reverse("project-list-create", kwargs={"workspace_id": self.workspace_id})
+        data = {
+            "name": "Project with Labels",
+            "code": "PWL",
+            "labels": [str(ws_label.id)],
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(response.data["labels"]), 1)
+
+        # Attempt to assign foreign label
+        data_bad = {
+            "name": "Project with Bad Labels",
+            "code": "PWBL",
+            "labels": [str(foreign_label.id)],
+        }
+        response_bad = self.client.post(url, data_bad, format="json")
+        self.assertEqual(response_bad.status_code, status.HTTP_400_BAD_REQUEST)
+
