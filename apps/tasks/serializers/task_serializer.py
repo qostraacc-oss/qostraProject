@@ -21,9 +21,19 @@ class TaskLabelSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "color", "slug"]
 
 
+class TaskSprintSerializer(serializers.ModelSerializer):
+    class Meta:
+        from sprints.models import Sprint
+
+        model = Sprint
+        fields = ["id", "name", "status"]
+
+
+
 class TaskSerializer(serializers.ModelSerializer):
     position = serializers.IntegerField(required=False)
     milestone_detail = TaskMilestoneSerializer(source="milestone", read_only=True)
+    sprint_detail = TaskSprintSerializer(source="sprint", read_only=True)
     labels = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Label.objects.all(),
@@ -57,6 +67,8 @@ class TaskSerializer(serializers.ModelSerializer):
             "updated_at",
             "milestone",
             "milestone_detail",
+            "sprint",
+            "sprint_detail",
             "labels",
             "labels_detail",
         ]
@@ -122,6 +134,22 @@ class TaskSerializer(serializers.ModelSerializer):
             if milestone.project.workspace_id != project.workspace_id:
                 raise serializers.ValidationError(
                     {"milestone": "The selected milestone is in a different workspace."}
+                )
+
+        # 3.5. Verify sprint alignment
+        sprint = attrs.get("sprint") or (
+            self.instance.sprint if self.instance else None
+        )
+        if sprint and project:
+            if sprint.project != project:
+                raise serializers.ValidationError(
+                    {
+                        "sprint": "The selected sprint does not belong to this project."
+                    }
+                )
+            if sprint.project.workspace_id != project.workspace_id:
+                raise serializers.ValidationError(
+                    {"sprint": "The selected sprint is in a different workspace."}
                 )
 
         # 4. Verify dates

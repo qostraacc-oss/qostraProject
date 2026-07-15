@@ -200,6 +200,14 @@ class Task(WorkspaceResourceMixin, models.Model):
         related_name="tasks",
     )
 
+    sprint = models.ForeignKey(
+        "sprints.Sprint",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tasks",
+    )
+
     labels = models.ManyToManyField(
         "labels.Label",
         blank=True,
@@ -306,6 +314,24 @@ class Task(WorkspaceResourceMixin, models.Model):
                     {
                         "milestone": _(
                             "The selected milestone is in a different workspace."
+                        )
+                    }
+                )
+
+        if self.sprint:
+            if self.sprint.project != self.project:
+                raise ValidationError(
+                    {
+                        "sprint": _(
+                            "The selected sprint does not belong to this project."
+                        )
+                    }
+                )
+            if self.sprint.project.workspace_id != self.project.workspace_id:
+                raise ValidationError(
+                    {
+                        "sprint": _(
+                            "The selected sprint is in a different workspace."
                         )
                     }
                 )

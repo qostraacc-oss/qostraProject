@@ -400,6 +400,12 @@ Retrieve tasks for a project.
         "name": "Phase 1: Backend Setup",
         "color": "blue",
         "status": "active"
+      },
+      "sprint": "e2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+      "sprint_detail": {
+        "id": "e2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+        "name": "Sprint 1: Auth & Layout",
+        "status": "PLANNED"
       }
     }
   ]
@@ -432,6 +438,7 @@ Create a new task inside a project.
       "d748f219-c09a-4c9f-8561-12503ea29ad3"
     ],
     "milestone": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+    "sprint": "e2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22", // optional
     "position": 0 // optional (must be contiguous: <= next available sequence index in the column)
   }
   ```
@@ -470,6 +477,12 @@ Create a new task inside a project.
       "name": "Phase 1: Backend Setup",
       "color": "blue",
       "status": "active"
+    },
+    "sprint": "e2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+    "sprint_detail": {
+      "id": "e2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+      "name": "Sprint 1: Auth & Layout",
+      "status": "PLANNED"
     }
   }
   ```
@@ -517,6 +530,12 @@ Fetch the details of a specific task.
       "name": "Phase 1: Backend Setup",
       "color": "blue",
       "status": "active"
+    },
+    "sprint": "e2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+    "sprint_detail": {
+      "id": "e2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+      "name": "Sprint 1: Auth & Layout",
+      "status": "PLANNED"
     }
   }
   ```
@@ -537,7 +556,8 @@ Partially update a task's details. Direct updates to `position` or `column` are 
   {
     "title": "Configure Redis Cache (Updated)",
     "estimate": "8.00",
-    "milestone": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+    "milestone": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+    "sprint": "e2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
   }
   ```
 * **Success Response (200 OK)**:
@@ -572,6 +592,12 @@ Partially update a task's details. Direct updates to `position` or `column` are 
       "name": "Phase 2: Frontend Setup",
       "color": "purple",
       "status": "planned"
+    },
+    "sprint": "e2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+    "sprint_detail": {
+      "id": "e2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+      "name": "Sprint 1: Auth & Layout",
+      "status": "PLANNED"
     }
   }
   ```

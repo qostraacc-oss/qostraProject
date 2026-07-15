@@ -13,7 +13,7 @@ This document provides a detailed overview of the QostraProjects project directo
 - `pyproject.toml` / `uv.lock`: Dependency definitions controlled via `uv`.
 
 ## 1. Apps (`/apps/`)
-Logic is partitioned into projects, milestones, tasks, and timelogs.
+Logic is partitioned into projects, milestones, tasks, timelogs, and sprints.
 
 ### Projects (`/projects/`)
 Core workspace project management (status, owners, metadata, and invitations).
@@ -42,6 +42,13 @@ Timesheet logging and duration tracking.
 - `views/`: Package managing timelog views.
 - `serializers/`: Handles timelog data validation.
 - `services/`: Encapsulates timesheet business services.
+
+### Sprints (`/sprints/`)
+Iteration scheduling and time-boxed roadmaps.
+- `models.py`: Defines the `Sprint` model (duration, status, associations).
+- `views/`: Package managing sprint views.
+- `serializers/`: Handles sprint data validation.
+
 
 ## 2. Common Components (`/common/`)
 - `utils/`: Date range parsers, weekly timesheet aggregation helpers.

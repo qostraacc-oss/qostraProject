@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.tasks",
     "apps.timelogs",
     "apps.labels",
+    "apps.sprints",
 ]
 
 
