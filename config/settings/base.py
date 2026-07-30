@@ -152,8 +152,34 @@ REST_FRAMEWORK = {
 AUTH_USER_MODEL = "accounts.User"
 
 # --- CORS Configuration ---
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=[
+        # Local development
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5176",
+        "http://localhost:5177",
+        "http://localhost:5178",
+        "http://localhost:5179",
+
+        # Server
+        "http://93.127.167.159:5000",
+        "http://93.127.167.159:5010",
+        "http://93.127.167.159:5020",
+        "http://93.127.167.159:5030",
+        "http://93.127.167.159:5040",
+        "http://93.127.167.159:5050",
+    ],
+)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://93\.127\.167\.159:\d+$",
+    r"^http://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
+]
+
 
 
 # --- Service Communication URLs ---
